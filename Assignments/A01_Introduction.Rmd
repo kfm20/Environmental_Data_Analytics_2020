@@ -22,21 +22,21 @@ The completed exercise is due on Tuesday, January 14th at 1:00 pm.
 
 1. What are your previous experiences with data analytics, R, and Git? Include both formal and informal training.
 
-> Answer: 
+> Answer: I took a statistics course that worked with R in undergrad, however I did not retain much knowledge. Other data analytics experience has been simple excel projects.
 
 2. Are there any components of the course about which you feel confident?
 
-> Answer: 
+> Answer: I am confident in my willingness to troubleshoot and then comfort asking questions.
 
 3. Are there any components of the course about which you feel apprehensive?
 
-> Answer: 
+> Answer: I am apprehensive about getting behind in the class and missing steps. I think I should keep open the powerpoint slides on my own computer so I can stay updated. 
 
 
 ## 2) GitHub
 
 Provide a link below to your forked course repository in GitHub. Make sure you have pulled all recent changes from the course repository  and that you have updated your course README file. 
 
-> Answer: 
+> Answer: https://github.com/kfm20/Environmental_Data_Analytics_2020.git
 
 
