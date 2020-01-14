@@ -1,6 +1,6 @@
 ---
 title: "Assignment 1: Introduction"
-author: "Student Name"
+author: Kathleen Mason
 output: pdf_document
 geometry: margin=2.54cm
 ---
