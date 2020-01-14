@@ -266,3 +266,6 @@ R Markdown and R script files can be organized into sections. Sections can be ex
 * Navigating from the menu bar, the Edit menu will bring you to the option "Folding". This option can be especially helpful when you first open a file and decide if you want to navigate between sections or run sections sequentially.
 
 * Highlight a section of text, and then press `option` + `command` + `L` (Mac) or `alt` + `L` (Windows). Add the `shift` key to this combination to expand, or click the box.
+
+#Save the file generally, then may re knit the document,
+#In Git Folder, open it, committ with comments, and push it up to remote file
