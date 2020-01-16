@@ -29,66 +29,71 @@ R treats objects differently based on their characteristics. For more informatio
 Define what each new piece of syntax does below (i.e., fill in blank comments). Note that the R chunk has been divided into sections (# at beginning of line, ---- at end)
 ```{r}
 # Vectors ----
-vector1 <- c(1,2,5.3,6,-2,4) # numeric vector
+vector1 <- c(1,2,5.3,6,-2,4) # numeric vector, c(x,x,x,) makes all into one things
 vector1
-vector2 <- c("one","two","three") # character vector
+vector2 <- c("one","two","three") # character vector, need "x" to tell it is a character
 vector2
-vector3 <- c(TRUE,TRUE,TRUE,FALSE,TRUE,FALSE) #logical vector
+vector3 <- c(TRUE,TRUE,TRUE,FALSE,TRUE,FALSE) #logical vector, capital letters lets R know it is a logical statement
 vector3
 
-vector1[3] # 
-
+vector1[3] # Tells the third number in vector1
+vector2[2]
 # Matrices ----
-matrix1 <- matrix(1:20, nrow = 5,ncol = 4) # 
-matrix1
+matrix1 <- matrix(1:20, nrow = 5,ncol = 4) # uses 1-20 with specified rows and columns, matrix is used as a function, can use help function to help tell what R needs
+matrix1 #if say nothing, goes down rows, byrow=FALSE would be this, aka automatic way it makes a matrix
 matrix2 <- matrix(1:20, nrow = 5, ncol = 4, byrow = TRUE) #
-matrix2
+matrix2 #will tell R to list from left to right and then down a row
 matrix3 <- matrix(1:20, nrow = 5, ncol = 4, byrow = TRUE, # return after comma continues the line
                   dimnames = list(c("uno", "dos", "tres", "cuatro", "cinco"), 
-                                  c("un", "deux", "trois", "cat"))) #
+                                  c("un", "deux", "trois", "cat"))) #ending line with comma lets R know you are going on to the next row
+matrix3
 
-matrix1[4, ] #
-matrix1[ , 3] #
-matrix1[c(12, 14)] #
-matrix1[c(12:14)] #
-matrix1[2:4, 1:3] #
+matrix1[4, ] #Pulls up row 4
+matrix1[ , 3] #Pulls up column 3
+matrix1[c(12, 14)] #pulls up values within that are the 12th and 14th numbers in the matrix
+matrix1[c(12:14)] #pulls up values that are the 12th through 14th numbers in the matrix
+matrix1[2:4, 1:3] #giving values in rows 2 to 4 and columns 1 to 3
 
 cells <- c(1, 26, 24, 68)
 rnames <- c("R1", "R2")
 cnames <- c("C1", "C2") 
 matrix4 <- matrix(cells, nrow = 2, ncol = 2, byrow = TRUE,
-  dimnames = list(rnames, cnames)) # 
+  dimnames = list(rnames, cnames)) # making a matrix using cells with left to right listing with names based on rnames and cnames
 matrix4
 
 # Lists ---- 
-list1 <- list(name = "Maria", mynumbers = vector1, mymatrix = matrix1, age = 5.3); list1
+list1 <- list(name = "Maria", mynumbers = vector1, mymatrix = matrix1, age = 5.3); list1 #a semi colon will run as one code, but will just give you what is after the semi colon
+#Puts multiple things/elements within this one list but kept separate
 list1[[2]]
 
 # Data Frames ----
-d <- c(1, 2, 3, 4) # What type of vector?
-e <- c("red", "white", "red", NA) # What type of vector?
-f <- c(TRUE, TRUE, TRUE, FALSE) # What type of vector?
+d <- c(1, 2, 3, 4) # What type of vector?- numeric
+e <- c("red", "white", "red", NA) # What type of vector?-character   Need NA to make data frame have consistent length of rows, R recognizes NA as it's own thing so doesn't need to be in quatatiomn marks
+f <- c(TRUE, TRUE, TRUE, FALSE) # What type of vector?-logical
 dataframe1 <- data.frame(d,e,f) #
-names(dataframe1) <- c("ID","Color","Passed"); View(dataframe1) # 
+names(dataframe1) <- c("ID","Color","Passed"); View(dataframe1) # giving d, e, f new names for columns
 
-dataframe1[1:2,] # 
+dataframe1[1:2,] # gives rows 1 through 2
 dataframe1[c("ID","Passed")] # 
 dataframe1$ID
 
 ```
 Question: How do the different types of data appear in the Environment tab?
 
-> Answer: 
+> Answer: Data vs values. Values are portions within data, and data is combinations of multiple values, can form a matrix
 
 Question: In the R chunk below, write "dataframe1$". Press `tab` after you type the dollar sign. What happens?
 
-> Answer: 
+> Answer: It offers you the value options within the dataframe/columns- ID, Color, Passed
 
 ### Coding challenge
 
 Find a ten-day forecast of temperatures (Fahrenheit) for Durham, North Carolina. Create two vectors, one representing the high temperature on each of the ten days and one representing the low.
 
 ```{r}
+vectorhigh<- c(62,45,50,50,40,40,45,52,54,58)
+
+vectorlow<- c(31,29,43,24,23,23,26,30,42,41)
 
 ```
 
@@ -96,18 +101,28 @@ Now, create two additional vectors that include the ten-day forecast for the hig
 
 ```{r}
 
+vectorhighc<-(vectorhigh-32)*5/9
+vectorlowc<-(vectorlow-32)*5/9
+
 ```
 
 Combine your four vectors into a data frame and add informative column names.
 
 ```{r}
-
+dataframeforecast<-data.frame(vectorhigh, vectorhighc, vectorlow, vectorlowc)
+names(dataframeforecast)<- c("High F", "High C", "Low F", "Low C")
+dataframeforecast
 ```
 
 Use the common functions `summary` and `sd` to obtain basic data summaries of the ten-day forecast. How would you call these functions differently for the entire data frame vs. a single column? Attempt to demonstrate both options below.
 
 ```{r}
-
+summary(dataframeforecast)
+summary(dataframeforecast$`High F`)
+sd(dataframeforecast$`High F`)
+sd(dataframeforecast$`High C`)
+sd(dataframeforecast$`Low F`)
+sd(dataframeforecast$`Low C`)
 ```
 
 
@@ -144,7 +159,7 @@ library(tidyverse)
 
 Question: What happens in the console when you load a package?
 
-> Answer: 
+> Answer: gives feedback if omsething went wrong, tells what others are similar functions
 
 
 ## Tips and Tricks
