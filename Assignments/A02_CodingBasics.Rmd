@@ -1,6 +1,6 @@
 ---
 title: "Assignment 2: Coding Basics"
-author: "Student Name"
+author: "Kathleen Mason"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -33,10 +33,23 @@ The completed exercise is due on Tuesday, January 21 at 1:00 pm.
 
 ```{r}
 #1. 
-
+seq(1, 100, 4) 
+#creating the sequence from 1 to 100 and counting by 4's
+NumberList<- c(seq(1, 100, 4)) 
+#Naming the sequence
+NumberList 
+#calling up the number list to see if it is right
 #2. 
-
+mean(NumberList) #calculating the mean of the sequence
+median(NumberList) #calculating the median of the sequence
 #3. 
+mean(NumberList) > median(NumberList) 
+#Asking if the mean is greater than the median,  
+#this came out as FALSE which means it is not 
+#greater than the mean, which is true becasue they are equal
+mean (NumberList) == median(NumberList)  
+#practicing my coding to make sure it is 
+#true that they are actually equal
 
 ```
 
@@ -51,21 +64,42 @@ The completed exercise is due on Tuesday, January 21 at 1:00 pm.
 8. Label the columns of your data frame with informative titles.
 
 ```{r}
+vectorNames<- c ("Rachel", "Jake", "Jack", "MC") 
+#Character vector
+vectorScores<- c (99, 100, 98, 48) 
+#Numerical Vector
+vectorPass<- c(TRUE, TRUE, TRUE, FALSE) 
+#Logical vector
+
+ClassTestResults<- data.frame(vectorNames, vectorScores, vectorPass) 
+#Creating dataframe with names, scores, and if they passed or not
+names(ClassTestResults)<- c("Name", "Score", "Pass?")  
+#giving columns new names
 
 ```
 
 9. QUESTION: How is this data frame different from a matrix?
 
-> Answer: 
+> Answer: Data frames can have different modes/forms of information like numbers, text, while matrices have to have it all be the same form.
 
 10. Create a function with an if/else statement. Your function should determine whether a test score is a passing grade of 50 or above (TRUE or FALSE). You will need to choose either the `if` and `else` statements or the `ifelse` statement. Hint: Use `print`, not `return`. The name of your function should be informative.
 
 11. Apply your function to the vector with test scores that you created in number 5. 
 
 ```{r}
+Testresults<- function(x) {if(x> 50) (x=TRUE) else (x=FALSE)} 
+Testresults2<-function(x) {ifelse(x>50,TRUE, FALSE)} 
+# ifelse(test, yes, no)
 
+Testresults2(vectorScores)
+
+lapply(vectorScores, Testresults2 )
+lapply(vectorScores, Testresults) 
+#lapply(what you want x to be(a vector), the function to use)     
+#Gives results of the function to the vector
+  
 ```
 
 12. QUESTION: Which option of `if` and `else` vs. `ifelse` worked? Why?
 
-> Answer: 
+> Answer: The 'ifelse' statement works best and directly applies the function to a vector. if and else provides an error message saying that the condition has a length greater than 1, therefore it doesn't work.I tried 'lapply' on the if and else function however, and the function does work so I am interested to learn why.
