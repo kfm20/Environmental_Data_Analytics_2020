@@ -88,10 +88,12 @@ names(ClassTestResults)<- c("Name", "Score", "Pass?")
 
 ```{r}
 Testresults<- function(x) {if(x> 50) (x=TRUE) else (x=FALSE)} 
+Testresults3<- function(x) {if(x> 50) print(TRUE) else print(FALSE)} #using print instead of x= which reassigned x as the Ture or false
 Testresults2<-function(x) {ifelse(x>50,TRUE, FALSE)} 
 # ifelse(test, yes, no)
 
 Testresults2(vectorScores)
+Testresults3(45)
 
 lapply(vectorScores, Testresults2 )
 lapply(vectorScores, Testresults) 
