@@ -198,7 +198,7 @@ USGS.flow.data$datetime <- format(USGS.flow.data$datetime, "%y%m%d")
 
 #
 create.early.dates <- (function(d) {
-       paste0(ifelse(d > 181231,"19","20"),d)
+       paste0(ifelse(d > 191231,"19","20"),d)
        })
 #
 USGS.flow.data$datetime <- create.early.dates(USGS.flow.data$datetime)
