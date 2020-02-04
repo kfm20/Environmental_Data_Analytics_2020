@@ -1,6 +1,6 @@
 ---
 title: "Assignment 4: Data Wrangling"
-author: "Student Name"
+author: "Kathleen Mason"
 output: pdf_document
 geometry: margin=2.54cm
 ---
@@ -25,8 +25,32 @@ The completed exercise is due on Tuesday, February 4 at 1:00 pm.
 
 ```{r, message = FALSE}
 #1
+getwd()
+library(dplyr)
+library(tidyverse)
+library(lubridate)
 
+EPAair_O3_NC18 <- read.csv("../Data/Raw/EPAair_O3_NC2018_raw.csv")
+EPAair_O3_NC19 <- read.csv("../Data/Raw/EPAair_O3_NC2019_raw.csv")
+
+EPAair_PM25_NC18 <- read.csv("../Data/Raw/EPAair_PM25_NC2018_raw.csv")
+EPAair_PM25_NC19 <- read.csv("../Data/Raw/EPAair_PM25_NC2019_raw.csv")
 #2
+dim(EPAair_O3_NC18)
+dim(EPAair_O3_NC19)
+dim(EPAair_PM25_NC18)
+dim(EPAair_PM25_NC19)
+
+colnames(EPAair_O3_NC18)
+colnames(EPAair_O3_NC19)
+colnames(EPAair_PM25_NC18)
+colnames(EPAair_PM25_NC19)
+
+
+str(EPAair_O3_NC18)
+str(EPAair_O3_NC19)
+str(EPAair_PM25_NC18)
+str(EPAair_PM25_NC19)
 ```
 
 ## Wrangle individual datasets to create processed files.
@@ -35,15 +59,50 @@ The completed exercise is due on Tuesday, February 4 at 1:00 pm.
 5. For the PM2.5 datasets, fill all cells in AQS_PARAMETER_DESC with "PM2.5" (all cells in this column should be identical).
 6. Save all four processed datasets in the Processed folder. Use the same file names as the raw files but replace "raw" with "processed".
 
-```{r}
+```{r, message = FALSE}
 #3
+class(EPAair_O3_NC18$Date)
+EPAair_O3_NC18$Date <- as.Date(EPAair_O3_NC18$Date, format = "%m/%d/%y")
+class(EPAair_O3_NC18$Date)
+
+class(EPAair_O3_NC19$Date)
+EPAair_O3_NC19$Date <- as.Date(EPAair_O3_NC19$Date, format = "%m/%d/%y")
+class(EPAair_O3_NC19$Date)
+
+EPAair_PM25_NC18$Date <- as.Date(EPAair_PM25_NC18$Date, format = "%m/%d/%y")
+class(EPAair_PM25_NC18$Date)
+
+EPAair_PM25_NC19$Date <- as.Date(EPAair_PM25_NC19$Date, format = "%m/%d/%y")
+class(EPAair_PM25_NC19$Date)
 
 #4
+EPAair_O3_NC18<- select(EPAair_O3_NC18, Date, DAILY_AQI_VALUE, Site.Name, AQS_PARAMETER_DESC, COUNTY, SITE_LATITUDE, SITE_LONGITUDE)
+
+EPAair_O3_NC19<- select(EPAair_O3_NC19, Date, DAILY_AQI_VALUE, Site.Name, AQS_PARAMETER_DESC, COUNTY, SITE_LATITUDE, SITE_LONGITUDE)
+
+EPAair_PM25_NC18<- select(EPAair_PM25_NC18, Date, DAILY_AQI_VALUE, Site.Name, AQS_PARAMETER_DESC, COUNTY, SITE_LATITUDE, SITE_LONGITUDE)
+
+EPAair_PM25_NC19<- select(EPAair_PM25_NC19, Date, DAILY_AQI_VALUE, Site.Name, AQS_PARAMETER_DESC, COUNTY, SITE_LATITUDE, SITE_LONGITUDE)
 
 #5
 
-#6
 
+EPAair_PM25_NC18$AQS_PARAMETER_DESC<- "PM2.5"
+
+
+EPAair_PM25_NC19$AQS_PARAMETER_DESC<- "PM2.5"
+
+
+#6
+write.csv(EPAair_O3_NC18, row.names = FALSE, 
+          file = "../Data/Processed/EPAair_O3_NC2018_processed.csv")
+write.csv(EPAair_O3_NC19, row.names = FALSE, 
+          file = "../Data/Processed/EPAair_O3_NC2019_processed.csv")
+write.csv(EPAair_PM25_NC18, row.names = FALSE, 
+          file = "../Data/Processed/EPAair_PM25_NC2018_processed.csv")
+
+write.csv(EPAair_PM25_NC19, row.names = FALSE, 
+          file = "../Data/Processed/EPAair_PM25_NC2019_processed.csv")
 ```
 
 
@@ -60,16 +119,74 @@ The completed exercise is due on Tuesday, February 4 at 1:00 pm.
 10. Call up the dimensions of your new tidy dataset.
 11. Save your processed dataset with the following file name: "EPAair_O3_PM25_NC1718_Processed.csv"
 
-```{r}
+```{r, message = FALSE}
 #7
+colnames(EPAair_O3_NC18)
+class(EPAair_O3_NC18$Date)
+
+colnames(EPAair_O3_NC19)
+class(EPAair_O3_NC19$Date)
+
+colnames(EPAair_PM25_NC18)
+class(EPAair_PM25_NC18$Date)
+
+colnames(EPAair_PM25_NC19)
+class(EPAair_PM25_NC19$Date)
+#all column names are the same, so that's good. On to the next step
+
+EPAair_18and19 <- rbind(EPAair_O3_NC18, EPAair_O3_NC19, EPAair_PM25_NC18, EPAair_PM25_NC19)
+
+dim(EPAair_18and19)
+#all the rows were correctly added
+
 
 #8
 
+EPAair_18and19_new8<- EPAair_18and19 %>% 
+  filter(Site.Name=="Linville Falls"| Site.Name=="Durham Armory"| Site.Name=="Leggett"| Site.Name=="Hattie Avenue"| Site.Name=="Clemmons Middle"|Site.Name=="Mendenhall School"|Site.Name=="Frying Pan Mountain"|Site.Name=="West Johnston Co."|Site.Name=="Garinger High School"|Site.Name=="Castle Hayne"|Site.Name=="Pitt Agri. Center"|Site.Name=="Bryson City"|Site.Name=="Millbrook School") %>% 
+  group_by(Date, Site.Name, AQS_PARAMETER_DESC, COUNTY) %>%
+  summarise(MeanAQI = mean(DAILY_AQI_VALUE), 
+            MeanLatitude= mean(SITE_LATITUDE), 
+            MeanLongitude= mean(SITE_LONGITUDE)) %>%
+  mutate(month=month(Date),year=year(Date))
+  
+dim(EPAair_18and19_new8)
+
+
+EPAair_18and19_new8<- EPAair_18and19 %>%
+filter(Site.Name == "Linville Falls" | 
+         Site.Name == "Durham Armory" |
+Site.Name == "Leggett" | 
+  Site.Name == "Hattie Avenue" | 
+  Site.Name == "Clemmons Middle" |
+Site.Name == "Mendenhall School" |
+Site.Name == "Frying Pan Mountain" |
+Site.Name == "West Johnston Co." | 
+  Site.Name == "Garinger High School" | 
+  Site.Name == "Castle Hayne" | 
+  Site.Name == "Pitt Agri. Center" | 
+  Site.Name == "Bryson City" | 
+  Site.Name == "Millbrook School") %>%
+group_by(Date, Site.Name, AQS_PARAMETER_DESC, COUNTY) %>% 
+  summarise(meanAQI = mean(DAILY_AQI_VALUE),
+meanlat = mean(SITE_LATITUDE),
+meanlon = mean(SITE_LONGITUDE)) %>% 
+  mutate(Year = lubridate::year(Date),
+Month = lubridate::month(Date))
+
+#I am not getting the correct dimensions. I have tried it multiple times and the first time it came out as 11,000+ and then it changed to 7800+ rows. I have compared with classmates and we have the same code, so somehow something must have happened. It is not in the rbind step though, because in my combined data frame of all 4 files the rows add up correctly.
+#I have gone on from this step after trouble shooting for a couple of days on this step.
+
 #9
+EPAair_18and19_new8_spread<-EPAair_18and19_new8 %>% 
+  spread(AQS_PARAMETER_DESC, meanAQI)
 
-#10
+#10. Call up the dimensions of your new tidy dataset.
+dim(EPAair_18and19_new8_spread)
 
-#11
+#11. Save your processed dataset with the following file name: "EPAair_O3_PM25_NC1718_Processed.csv"
+write.csv(EPAair_18and19_new8_spread, row.names = FALSE, 
+          file = "../Data/Processed/EPAair_O3_PM25_NC1718_Processed.csv")
 
 ```
 
@@ -79,15 +196,19 @@ The completed exercise is due on Tuesday, February 4 at 1:00 pm.
 
 13. Call up the dimensions of the summary dataset.
 
-```{r}
-#12a
+```{r, message = FALSE}
+#12a and b
+EPAair_Summary<- EPAair_18and19_new8_spread %>% group_by(Site.Name, Month, Year)%>%
+  summarise(MeanOzone=mean(Ozone), MeanPM2.5=mean(PM2.5)) %>%
+  drop_na(Month) %>%
+  drop_na(Year)
 
-#12b
 
 #13
+dim(EPAair_Summary)
 
 ```
 
 14. Why did we use the function `drop_na` rather than `na.omit`?
 
-> Answer: 
+> Answer: drop_na is found in the dplyr package and deletes rows where there are NAs in a specific column. omit_na is used in conditional statements to determine if missing values fit the arguments
