@@ -6,6 +6,7 @@ output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
   chunk_output_type: console
+  #can specify where want outputs to be displayed
 ---
 
 ## Objectives
@@ -21,17 +22,18 @@ Effective data visualization depends on purposeful choices about graph types. Th
 ```{r, message = FALSE, warning = FALSE}
 getwd()
 library(tidyverse)
+install.packages("ggridges")
 library(ggridges)
 
 PeterPaul.chem.nutrients <- 
   read.csv("./Data/Processed/NTL-LTER_Lake_Chemistry_Nutrients_PeterPaul_Processed.csv")
 PeterPaul.chem.nutrients.gathered <-
   read.csv("./Data/Processed/NTL-LTER_Lake_Nutrients_PeterPaulGathered_Processed.csv")
-EPAair <- read.csv("./Data/Processed/EPAair_O3_PM25_NC1819_Processed.csv")
+EPAair <- read.csv("./Data/Processed/EPAair_O3_PM25_NC1819_Processed_KS.csv")
 
 EPAair$Date <- as.Date(EPAair$Date, format = "%Y-%m-%d")
 PeterPaul.chem.nutrients$sampledate <- as.Date(PeterPaul.chem.nutrients$sampledate, format = "%Y-%m-%d")
-
+class(EPAair$Date)
 ```
 
 ## ggplot
@@ -45,7 +47,7 @@ ggplot has only a few rules:
 * Additional layers must be specified to fill the plot. 
 
 ### Geoms
-
+Type of plot, which we need to specify
 Here are some commonly used layers for plotting in ggplot: 
 
 * geom_bar
@@ -77,23 +79,38 @@ Here are some commonly used aesthetic types that can be manipulated in ggplot:
 # Scatterplot
 ggplot(EPAair, aes(x = Date, y = Ozone)) + 
   geom_point()
+#ggplot(which dataframe, aesthetics of x axis and y axis)+geom_point
+#geompoint specifies which kind of plot to make, use a plus symbol to do this, without specifying it will just graph the x and y axis that had been specified
 
 O3plot <- ggplot(EPAair) +
   geom_point(aes(x = Date, y = Ozone))
-print(O3plot)
+print(O3plot) #print allows it to show up and appear in pdf when knit this
 
 # Fix this code
 O3plot2 <- ggplot(EPAair) +
   geom_point(aes(x = Date, y = Ozone, color = "blue"))
 print(O3plot2)
+#Need to keep the color outside of the aes(x,y)
+#this is correct instead
+O3plot2 <- ggplot(EPAair) +
+  geom_point(aes(x = Date, y = Ozone), color = "blue")
+print(O3plot2)
 
 # Add additional variables
+#This color aesthetic telling it to make the site names a different color
+#as.factor makes Year a categorical(factor instead of integer) variable- doesn't change it from an integer in actual data frame
 PMplot <- 
-  ggplot(EPAair, aes(x = Month, y = PM2.5, shape = as.factor(Year), color = Site.Name)) +
+  ggplot(EPAair, aes(x = Month, y = PM2.5, shape = as.factor(Year), 
+                     color = Site.Name)) +
   geom_point()
 print(PMplot)
+#this is not aesthetically worthy
+
 
 # Separate plot with facets
+#not using color-sitename
+#facet wrap separating by site name so each has its own graph
+#for all facets, specifies all rows
 PMplot.faceted <-
   ggplot(EPAair, aes(x = Month, y = PM2.5, shape = as.factor(Year))) +
   geom_point() +
@@ -101,6 +118,8 @@ PMplot.faceted <-
 print(PMplot.faceted)
 
 # Filter dataset within plot building and facet by multiple variables
+#subsetting is "filtering" by site name in this case
+#or  ggplot(subset(EPAair,Site.Name %in% c("Clemens Middle", "", "")),
 PMplot.faceted2 <- 
   ggplot(subset(EPAair, Site.Name == "Clemmons Middle" | Site.Name == "Leggett" |
                   Site.Name == "Bryson City"), 
@@ -110,22 +129,39 @@ PMplot.faceted2 <-
 print(PMplot.faceted2)
 
 # Plot true time series with geom_line
+#time series must be within one spatial construct
 PMplot.line <- 
   ggplot(subset(EPAair, Site.Name == "Leggett"), 
          aes(x = Date, y = PM2.5)) +
-  geom_line()
+  geom_line() +
+  geom_point()
 print(PMplot.line)
+
+#If there are gaps in time in data, R will still connect
+#NA's will supply an actual break in data and not connect them
+
+
 
 # Exercise: build your own scatterplots of PeterPaul.chem.nutrients
 
 # 1. 
+surftemps<- ggplot(subset(PeterPaul.chem.nutrients, depth==0)) +
+  geom_point(aes(x = daynum, y = temperature_C, color = year4)) +
+               facet_grid(vars(lakename))
+             print(surftemps)
 # Plot surface temperatures by day of  year. 
+#Subset the dataset by depth=0 for surface water
 # Color your points by year, and facet by lake in two rows.
 
-
+             
 #2. 
-# Plot temperature by date. Color your points by depth.
+tempdate<- ggplot(PeterPaul.chem.nutrients)+
+      geom_point(aes(x= sampledate, y= temperature_C, color = depth), 
+                 size = 0.5)
+print(tempdate)
+    # Plot temperature by date. Color your points by depth.
 # Change the size of your point to 0.5
+#not a true time series because it's at multiple depths and for two lakes, a true time series needs to be at one spot over time
 
 
 ```
@@ -139,26 +175,36 @@ lightvsDO <-
 print(lightvsDO)
 
 # Adjust axes
+#Huge outliers that are not real, so can readjust axes to focus in on the real data that is of interest
 lightvsDOfixed <- 
   ggplot(PeterPaul.chem.nutrients, aes(x = irradianceWater, y = dissolvedOxygen)) +
   geom_point() +
   xlim(0, 250) +
   ylim(0, 20)
 print(lightvsDOfixed)
+#High irradiance levels, DO doesn;t change much, but at really low irradiance, large variance in DO values
+#low low light, variability in Oxygen
+
 
 # Depth in the fields of limnology and oceanography is on a reverse scale
+#helps show cross section of lake- surface depth on top to bottom
 tempvsdepth <- 
   ggplot(PeterPaul.chem.nutrients, aes(x = temperature_C, y = depth)) +
   #ggplot(PeterPaul.chem.nutrients, aes(x = temperature_C, y = depth, color = daynum)) +
+  #can add in color aes as third variable to see changes of temp and depth over seasons
   geom_point() +
   scale_y_reverse()
 print(tempvsdepth)
+#showing warmer temps at higher depths
 
 NvsP <-
   ggplot(PeterPaul.chem.nutrients, aes(x = tp_ug, y = tn_ug, color = depth)) +
   geom_point() +
-  geom_smooth(method = lm) +
+  geom_smooth(method = lm) + 
+  #geomsmooth gives line of best fit, specifiying a linear model
+  #geo_smooth(method=lm, se=FALSE) will rid of confidence interval around model line
   geom_abline(aes(slope = 16, intercept = 0))
+#geom_abline is showing a known slope/relationship, here N should be 16 to 0 P
 print(NvsP)
 
 # Exercise: Plot relationships between air quality measurements
@@ -219,7 +265,7 @@ print(Nutrientplot7)
 # Ridgeline plot
 Nutrientplot6 <-
   ggplot(PeterPaul.chem.nutrients.gathered, aes(y = nutrient, x = concentration)) +
-  geom_density_ridges(aes(fill = lakename), alpha = 0.5) #
+  geom_density_ridges(aes(fill = lakename), alpha = 0.5) #alpha was the transparency piece
 print(Nutrientplot6)
 
 # Exercise: Plot distributions of AQI values for EPAair
