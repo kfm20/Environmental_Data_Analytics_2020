@@ -8,6 +8,7 @@ editor_options:
   chunk_output_type: console
   #can specify where want outputs to be displayed
 ---
+Notes: Barplots are really only great for count data*
 
 ## Objectives
 1. Perform simple data visualizations in the R package `ggplot`

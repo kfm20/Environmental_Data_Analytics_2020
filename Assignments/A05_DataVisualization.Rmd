@@ -1,6 +1,6 @@
 ---
 title: "Assignment 5: Data Visualization"
-author: "Student Name"
+author: "Kathleen Mason"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -29,17 +29,37 @@ The completed exercise is due on Tuesday, February 11 at 1:00 pm.
 
 ```{r}
 #1
+getwd()
 
+library(tidyverse)
+#install.packages("cowplot")
+library(cowplot)
 
+Nutrient.peterpaul<- read.csv("./Data/Processed/NTL-LTER_Lake_Nutrients_PeterPaulGathered_Processed.csv")
+
+ChemandNutrients.peterpaul<- read.csv("./Data/Processed/NTL-LTER_Lake_Chemistry_Nutrients_PeterPaul_Processed.csv")
+
+Litter<- read.csv("./Data/Processed/NEON_NIWO_Litter_mass_trap_Processed.csv")
 #2
+class(Litter$collectDate) #it is a factor
+Litter$collectDate<-as.Date(Litter$collectDate, format= "%Y-%m-%d")
+class(Litter$collectDate)
 
+class(Nutrient.peterpaul$sampledate) #it is a factor
+Nutrient.peterpaul$sampledate<-as.Date(Nutrient.peterpaul$sampledate, format= "%Y-%m-%d")
 
+class(ChemandNutrients.peterpaul$sampledate) #factor
+ChemandNutrients.peterpaul$sampledate<-as.Date(ChemandNutrients.peterpaul$sampledate, format= "%Y-%m-%d")
+
+#Now all confirmed as dates
 ```
 ## Define your theme
 3. Build a theme and set it as your default theme.
 
 ```{r}
-
+mytheme <- theme_classic(base_size = 12) +
+  theme(axis.text = element_text(color = "black"), 
+        legend.position = "right")
 
 ```
 
@@ -50,7 +70,15 @@ For numbers 4-7, create ggplot graphs and adjust aesthetics to follow best pract
 
 ```{r}
 
+totalPbyPhos<-
+  ggplot(ChemandNutrients.peterpaul, 
+         aes(x= tp_ug, y= po4, color= lakename)) +
+  geom_point() +
+  geom_smooth(method = lm, se=FALSE) +
+  ylim(0,50 )+
+  mytheme
 
+print(totalPbyPhos)
 
 ```
 
@@ -58,13 +86,46 @@ For numbers 4-7, create ggplot graphs and adjust aesthetics to follow best pract
 5. [NTL-LTER] Make three separate boxplots of (a) temperature, (b) TP, and (c) TN, with month as the x axis and lake as a color aesthetic. Then, create a cowplot that combines the three graphs. Make sure that only one legend is present and that graph axes are aligned.
 
 ```{r}
+class(ChemandNutrients.peterpaul$month)
+ChemandNutrients.peterpaul$month <- factor(ChemandNutrients.peterpaul$month)
 
+TempbyMonth<-
+  ggplot(ChemandNutrients.peterpaul, aes(month,temperature_C))+
+  geom_boxplot(aes(color=lakename))+ 
+  labs(x=expression("Month"), y=expression("Temperature"))+
+  mytheme
+print(TempbyMonth)
 
+TPbyMonth<-
+  ggplot(ChemandNutrients.peterpaul, 
+         aes(x= month, y= tp_ug))+
+  geom_boxplot(aes(color=lakename))+
+  labs(x=expression("Month"), y=expression("Total Phosphorus"))+
+  mytheme
+print(TPbyMonth)
+
+TNbyMonth<-
+  ggplot(ChemandNutrients.peterpaul, 
+         aes(x= month, y= tn_ug))+
+  geom_boxplot(aes(color=lakename))+ 
+  labs(x=expression("Month"), y=expression("Total Nitrogen"))+ mytheme +theme(legend.position="bottom")
+print(TNbyMonth)
+
+#Cowplot
+library(cowplot)
+MonthbyX<-plot_grid(TempbyMonth+theme(legend.position="none"), 
+                    TPbyMonth+ theme(legend.position="none"), 
+                    TNbyMonth, 
+                    nrow = 3, align = 'h', axis = "bt")+ mytheme
+print(MonthbyX)
+
+#+ theme(legend.position="none") omits a legend, so I omitted two of the graphs legends and kept one
+#axis ="bt" aligns the bottom and top of the graphs
 ```
 
 Question: What do you observe about the variables of interest over seasons and between lakes? 
 
-> Answer: 
+> Answer: The two lakes have relatively similar observations among the parameters of temp, TP, and TN. Temperature increases in the summer months, and N and P have more peak concentrations in these same months. P and N are more variable when warmer 
 
 6. [Niwot Ridge] Plot a subset of the litter dataset by displaying only the "Needles" functional group. Plot the dry mass of needle litter by date and separate by NLCD class with a color aesthetic. (no need to adjust the name of each land use)
 
@@ -73,9 +134,22 @@ Question: What do you observe about the variables of interest over seasons and b
 ```{r}
 
 
+#6
+Needles.drymass.time<-
+  ggplot(subset(Litter, functionalGroup == "Needles" ), 
+         aes(x=collectDate, y=dryMass))+
+  geom_point(aes(color=nlcdClass))+ mytheme+theme(legend.position = "right")
+print(Needles.drymass.time)
 
+
+#7
+Needles.drymass.time<-
+  ggplot(subset(Litter, functionalGroup == "Needles" ), aes(x=collectDate, y=dryMass))+
+  geom_point()+ facet_wrap(vars(nlcdClass), nrow=3) + mytheme
+
+print(Needles.drymass.time)
 ```
 
 Question: Which of these plots (6 vs. 7) do you think is more effective, and why? 
 
-> Answer: 
+> Answer: I think 7 is a more effective way to see the changes in dry mass over time for each NLCD class, while still comparing them against each other. In figure 6, it is hard to see a specific trend, I think they get lost together. 
