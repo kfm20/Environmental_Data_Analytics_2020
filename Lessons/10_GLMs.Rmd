@@ -18,7 +18,7 @@ editor_options:
 getwd()
 library(tidyverse)
 
-EPAair <- read.csv("./Data/Processed/EPAair_O3_PM25_NC1819_Processed.csv")
+EPAair <- read.csv("./Data/Processed/EPAair_O3_PM25_NC1819_Processed_KS.csv")
 
 # Set date to date format
 EPAair$Date <- as.Date(EPAair$Date, format = "%Y-%m-%d")
@@ -63,50 +63,78 @@ Are Ozone levels below the threshold for "good" AQI index (0-50)?
 ```{r}
 
 summary(EPAair$Ozone)
-EPAair.subsample <- sample_n(EPAair, 5000)
+EPAair.subsample <- sample_n(EPAair, 5000) 
+#taking random subsample (5000) of those data points
 
 # Evaluate assumption of normal distribution
 shapiro.test((EPAair.subsample$Ozone))
+#assumption that data is normally distributed, but here p value is really really small, so possibility of normal distribution is very low, "data is not well proximated by normal distribution"
+
 ggplot(EPAair, aes(x = Ozone)) +
   geom_histogram() 
+#long right skew
+
 qqnorm(EPAair$Ozone); qqline(EPAair$Ozone)
+#compairing what we have vs what it would be if normal distribution
 
 O3.onesample <- t.test(EPAair$Ozone, mu = 50, alternative = "less")
+#saving this as an object so can call it up again
+#giving one ozone column, comparing to a mu of 50, alternative hypoth is that the mean is less than 50
+#if don't specify less, R will assume the alternative is greater or less than
 O3.onesample
+#from results... 95% confidence interval that mean is negative infinity to 41.13
+#mean of x
+#pvalue is less than 0.05 it is significant so we reject the null hypothesis
+#null hypothesis is that the mean is equal to 50
+
 
 Ozone.plot <- ggplot(EPAair, aes(x = Ozone)) +
-  #geom_density(stat = "count", fill = "gray") +
-  geom_density(fill = "gray") +
+  #geom_density(stat = "count", fill = "gray") +  #this shows the count
+  geom_density(fill = "gray") + #this shows density distribution
   geom_vline(xintercept = 50, color = "#238b45", lty = 2, size = 0.9) +
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0))
+#this final line of code makes axes start at 0, sometimes R will make them start a little higher
 print(Ozone.plot)
 ```
 
 Write a sentence or two about the results of this test. Include both the results of the test and an interpretation that puts the findings in context of the resarch question.
 
-> 
+> When determining the mean of the Ozone data, we hypothesize that the mean will be less than 50. Based on our t test, the pvalue is less than 0.05 and therefore significant, so we reject the null hypothesis (mean-50), and accept alternative hypothesis that the mean Ozone is less than 50. 
+
+>Kateri's: EPA ozone measurements for 18-19 were significantly lower than 50, the AQI threshold for "good" air quality (one sample t-test; t=-57.98, p<0.0001). #Communicating what question actually was and exactly what they need to know to answer the question
 
 ### Two-sample t-test
 The two-sample *t* test is used to test the hypothesis that the mean of two samples is equivalent. Unlike the one-sample tests, a two-sample test requires a second assumption that the variance of the two groups is equivalent. Are Ozone levels different between 2018 and 2019?
 
 ```{r}
-shapiro.test(EPAair$Ozone[EPAair$Year == 2018])
+shapiro.test(EPAair$Ozone[EPAair$Year == 2018]) #defining ozone measurements for when the year is X
 shapiro.test(EPAair$Ozone[EPAair$Year == 2019])
 var.test(EPAair$Ozone ~ EPAair$Year)
+#variances are significantly different from each other
 
 ggplot(EPAair, aes(x = Ozone, color = as.factor(Year))) +
   geom_freqpoly()
 
 # Format as a t-test
-O3.twosample <- t.test(EPAair$Ozone ~ EPAair$Year)
-O3.twosample
-O3.twosample$p.value
+O3.twosample <- t.test(EPAair$Ozone ~ EPAair$Year) #test Ozone by year
+#alternative would be that means are different
+#null that the means are equal
 
-# Format as a GLM
+O3.twosample
+#pvalue not significant, reject null that the means are equal
+#provides a mean for 2018 and 2019
+
+O3.twosample$p.value
+#just call us pvalue of the test
+
+# Format as a GLM (generalized linear model)
 O3.twosample2 <- lm(EPAair$Ozone ~ EPAair$Year)
-summary(O3.twosample2)
+summary(O3.twosample2) #need to call it up using summary with a LM
+#treating year as continuous response variable
+#gives approx increase in ozone each year (0.8452)
 
 plot(O3.twosample2)
+#par(mfrow=c(2,2)) allows the 4 graphs to be plotted all in one, after use this will need to set it back to (1,1) to only graph one at a time
 ```
 
 ### Non-parametric equivalent of t-test: Wilcoxon test
@@ -116,8 +144,9 @@ When we wish to avoid the assumption of normality, we can apply *distribution-fr
 ```{r}
 O3.onesample.wilcox <- wilcox.test(EPAair$Ozone, mu = 50, alternative = "less")
 O3.onesample.wilcox
+#less statistical robustness, simply gives p value and summary
 O3.twosample.wilcox <- wilcox.test(EPAair$Ozone ~ EPAair$Year)
-O3.twosample.wilcox
+#alt hypoth- diff air qualities in different years
 ```
 
 ### Visualization and interpretation challenge
@@ -129,8 +158,22 @@ Create three plots, each with appropriately formatted axes and legends. Choose a
 3. geom_violin of ozone divided by year, with the 0.5 quantile marked as a horizontal line. Add letters representing a significant difference between 2018 and 2019. 
 
 ```{r}
+1.
+ozone1<-ggplot(EPAair,aes(x = Ozone, fill = as.factor(Year)))+
+  geom_density(alpha=0.5)+
+  scale_x_continuous(expand = c(0, 0)) + 
+  scale_y_continuous(expand = c(0, 0))
+print(ozone1)
 
+2.
+ozone2<- ggplot(EPAair,aes(x = as.factor(Year)))+
+  geom_boxplot(aes(y=Ozone))
+print(ozone2)
 
+3.
+ozone3<- ggplot(EPAair,aes(x = as.factor(Year)))+
+  geom_violin(aes(y=Ozone))
+print(ozone3)
 ```
 
 Now, write a summary of your findings, incorporating statistical output, reference to the figure(s), and a contextual interpretation.
