@@ -1,0 +1,135 @@
+---
+title: "Assignment 6: GLMs week 1 (t-test and ANOVA)"
+author: "Kathleen Mason"
+output: pdf_document
+geometry: margin=2.54cm
+editor_options: 
+  chunk_output_type: console
+---
+
+## OVERVIEW
+
+This exercise accompanies the lessons in Environmental Data Analytics on t-tests and ANOVAs. 
+
+## Directions
+1. Change "Student Name" on line 3 (above) with your name.
+3. Work through the steps, **creating code and output** that fulfill each instruction.
+4. Be sure to **answer the questions** in this assignment document.
+6. When you have completed the assignment, **Knit** the text and code into a single PDF file.
+8. After Knitting, submit the completed exercise (PDF file) to the dropbox in Sakai. Add your last name into the file name (e.g., "Salk_A06_GLMs_Week1.Rmd") prior to submission.
+
+The completed exercise is due on Tuesday, February 18 at 1:00 pm.
+
+## Set up your session
+
+1. Check your working directory, load the `tidyverse`, `cowplot`, and `agricolae` packages, and import the NTL-LTER_Lake_Nutrients_PeterPaul_Processed.csv dataset. 
+
+2. Change the date column to a date format. Call up `head` of this column to verify.
+
+
+```{r, message = FALSE}
+#1
+getwd()
+library(tidyverse)
+library(cowplot)
+library(agricolae)
+
+Nutrients <- read.csv("./Data/Processed/NTL-LTER_Lake_Nutrients_PeterPaul_Processed.csv")
+
+#2
+Nutrients$collectDate <- as.Date(Nutrients$sampledate , format = "%Y-%m-%d")
+class(Nutrients$sampledate)
+head(Nutrients$sampledate)
+
+```
+
+
+## Wrangle your data
+
+3. Wrangle your dataset so that it contains only surface depths and only the years 1993-1996, inclusive. Set month as a factor.
+```{r}
+Nutrients.Wrangled<- Nutrients%>% 
+  filter(year4==1993:1996)%>% 
+  filter(depth==0) 
+Nutrients.Wrangled$month <- as.factor(Nutrients.Wrangled$month)
+class(Nutrients.Wrangled$month)
+
+```
+
+## Analysis
+
+Peter Lake was manipulated with additions of nitrogen and phosphorus over the years 1993-1996 in an effort to assess the impacts of eutrophication in lakes. You are tasked with finding out if nutrients are significantly higher in Peter Lake than Paul Lake, and if these potential differences in nutrients vary seasonally (use month as a factor to represent seasonality). Run two separate tests for TN and TP.
+
+4. Which application of the GLM will you use (t-test, one-way ANOVA, two-way ANOVA with main effects, or two-way ANOVA with interaction effects)? Justify your choice.
+
+> Answer: 2 two-way Anovas with interaction effects
+We are testing two categorical variable (month and lake name) as predictors for a continuous variable (TP, TN). Lake name and month might interact if one lake is effected more by sesonality than another.
+
+5. Run your test for TN. Include examination of groupings and consider interaction effects, if relevant.
+
+6. Run your test for TP. Include examination of groupings and consider interaction effects, if relevant.
+
+```{r}
+#5
+N.W.test <- aov(data = Nutrients.Wrangled, tn_ug ~ lakename * month)
+summary(N.W.test)
+
+N.W.test2 <- lm(data = Nutrients.Wrangled, tn_ug ~ lakename * month)
+summary(N.W.test2)
+
+TukeyHSD(N.W.test)
+
+Nutrient.interaction <- with(Nutrients.Wrangled,interaction(lakename, month))
+Nutrient.anova.2way5 <- aov(data = Nutrients.Wrangled, tn_ug ~ Nutrient.interaction)
+
+Nutrient.groups <- HSD.test(Nutrient.anova.2way5, "Nutrient.interaction", group = TRUE)
+Nutrient.groups
+
+#6
+N.W.test.p <- aov(data = Nutrients.Wrangled, tp_ug ~ lakename * month)
+summary(N.W.test.p)
+
+N.W.test.p.lm <- lm(data = Nutrients.Wrangled, tp_ug ~ lakename * month)
+summary(N.W.test2)
+
+TukeyHSD(N.W.test.p)
+
+Nutrient.interaction.p <- with(Nutrients.Wrangled,interaction(lakename, month))
+Nutrient.anova.2way5.p <- aov(data = Nutrients.Wrangled, tp_ug ~ Nutrient.interaction.p)
+
+Nutrient.groups.p <- HSD.test(Nutrient.anova.2way5.p, "Nutrient.interaction.p", group = TRUE)
+Nutrient.groups.p
+```
+
+7. Create two plots, with TN (plot 1) or TP (plot 2) as the response variable and month and lake as the predictor variables. Hint: you may use some of the code you used for your visualization assignment. Assign groupings with letters, as determined from your tests. Adjust your axes, aesthetics, and color palettes in accordance with best data visualization practices.
+
+8. Combine your plots with cowplot, with a common legend at the top and the two graphs stacked vertically. Your x axes should be formatted with the same breaks, such that you can remove the title and text of the top legend and retain just the bottom legend. 
+
+```{r}
+#7
+Nutrient.anova.plot.n <- ggplot(Nutrients.Wrangled, aes(y = tn_ug, x = month, color = lakename)) +
+  geom_boxplot()+
+  stat_summary(geom = "text", fun.y = max, vjust = -1, size = 3.5, 
+               position = position_dodge(.75),
+               label = c("a", "a", "a","a","a","a","a","a","a")) +
+  labs(x = "Month", y = "Total Nitrogen", color= "Lake Name") 
+print(Nutrient.anova.plot.n)
+
+Nutrient.anova.plot.p <- ggplot(Nutrients.Wrangled, aes(y = tp_ug, x = month, color = lakename)) +
+  geom_boxplot()+
+  stat_summary(geom = "text", fun.y = max, vjust = -1, size = 3.5, 
+               position = position_dodge(.75),
+               label = c("a", "a", "a","a","a","a","a","a","a")) +
+  labs(x = "Month", y = "Total Phosphorus", color= "Lake Name") 
+print(Nutrient.anova.plot.p)
+
+
+#8
+library(cowplot)
+Nutrient.cowplot<-plot_grid(Nutrient.anova.plot.n, Nutrient.anova.plot.p, nrow = 2, align = 'v', rel_heights = c(1.25, 1))
+
+```
+
+
+
+

@@ -1,0 +1,215 @@
+---
+title: "11: Generalized Linear Models (ANOVA)"
+author: "Environmental Data Analytics | Kateri Salk"
+date: "Spring 2020"
+output: pdf_document
+geometry: margin=2.54cm
+editor_options: 
+  chunk_output_type: console
+---
+
+## Objectives
+2. Apply special cases of the GLM (ANOVA) to real datasets
+3. Interpret and report the results of ANOVA in publication-style formats
+
+## Set up
+```{r, message = FALSE}
+getwd()
+library(tidyverse)
+install.packages("agricolae")
+library(agricolae)
+
+Litter <- read.csv("./Data/Processed/NEON_NIWO_Litter_mass_trap_Processed.csv")
+
+# Set date to date format
+Litter$collectDate <- as.Date(Litter$collectDate , format = "%Y-%m-%d")
+
+# Set theme
+mytheme <- theme_classic(base_size = 14) +
+  theme(axis.text = element_text(color = "black"), 
+        legend.position = "top")
+theme_set(mytheme)
+```
+
+### One-way ANOVA
+A one-way ANOVA is the same test in practice as a two-sample t-test but for three or more groups. In R, we can  run the model with the function `lm` or `aov`, the latter of which which will allow us to run post-hoc tests to determine pairwise differences.
+Analysis of variance
+looking at continuous variable with means across
+looing at alpha
+
+
+Does total litter biomass differ among sites at the Niwot Ridge LTER?
+```{r}
+# Wrangle the data
+#adding up totals of litter- grouping all of functional groups together
+#Taking everything that has same ID and collectdate and then group and total all drymass of those
+Litter.Totals <- Litter %>%
+  group_by(plotID, collectDate, nlcdClass) %>%
+  summarise(dryMass = sum(dryMass))
+
+# Test for normality. 
+# Note: the important assumption for GLMs is normality of residuals, 
+# not necessarily normality of raw data. See below when we plot the model.
+shapiro.test(Litter.Totals$dryMass[Litter.Totals$plotID == "NIWO_040"])
+shapiro.test(Litter.Totals$dryMass[Litter.Totals$plotID == "NIWO_041"])
+shapiro.test(Litter.Totals$dryMass[Litter.Totals$plotID == "NIWO_046"])
+shapiro.test(Litter.Totals$dryMass[Litter.Totals$plotID == "NIWO_047"])
+shapiro.test(Litter.Totals$dryMass[Litter.Totals$plotID == "NIWO_051"])
+shapiro.test(Litter.Totals$dryMass[Litter.Totals$plotID == "NIWO_057"])
+shapiro.test(Litter.Totals$dryMass[Litter.Totals$plotID == "NIWO_058"])
+shapiro.test(Litter.Totals$dryMass[Litter.Totals$plotID == "NIWO_061"])
+shapiro.test(Litter.Totals$dryMass[Litter.Totals$plotID == "NIWO_062"])
+shapiro.test(Litter.Totals$dryMass[Litter.Totals$plotID == "NIWO_063"])
+shapiro.test(Litter.Totals$dryMass[Litter.Totals$plotID == "NIWO_064"])
+shapiro.test(Litter.Totals$dryMass[Litter.Totals$plotID == "NIWO_067"])
+
+qqnorm(Litter.Totals$dryMass); qqline(Litter.Totals$dryMass)
+
+# Test for equal variance
+# ANOVA is robust against departures from equal variance.
+bartlett.test(Litter.Totals$dryMass ~ Litter.Totals$plotID)
+
+# Format ANOVA as aov
+Litter.Totals.anova <- aov(data = Litter.Totals, dryMass ~ plotID)
+summary(Litter.Totals.anova)
+#are the means of drymass different from plotID
+#saying plotid is a significant indicator of drymass
+#refers to general plot ID
+
+# Format ANOVA as lm
+Litter.Totals.anova2 <- lm(data = Litter.Totals, dryMass ~ plotID)
+summary(Litter.Totals.anova2)
+#specific to each plot ID, determining whether the alpha value is significantly different from the intercept
+
+# Checking model fit and assumptions
+# ANOVA is robust against departures from normality.
+plot(Litter.Totals.anova2)
+
+
+
+
+# Post-hoc test-- RUN THIS ON AOV OBJECT
+TukeyHSD(Litter.Totals.anova)
+#all options for pairwise comparison
+#not great when have a lot of groups...
+
+#pairwise comparison in a more efficient way
+# Extract groupings for pairwise relationships
+#STILL RUN ON AOV OBJECT
+Litter.Totals.groups <- HSD.test(Litter.Totals.anova, "plotID", group = TRUE)
+Litter.Totals.groups
+#If letters match, the plotID's are not significantly different values
+
+# Graph the results
+Litter.Totals.plot <- ggplot(Litter.Totals, aes(x = plotID, y = dryMass)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + #editing our theme 
+  stat_summary(geom = "text", fun.y = max, vjust = -1, size = 3.5, 
+               #picking max value of y, adjust it vertically and the size
+#assigning labels from exact order that it appears in data set (alphabetically)-not in order it appeared in our model...**
+               label = c("abc", "ab", "abcd", "bcd", "bcd", "a", 
+                         "d", "abcd", "cd", "d", "abcd", "abcd")) +
+  labs(x = "Plot ID", y = "Dry Mass (g)") +
+  ylim(0, 85)
+print(Litter.Totals.plot)
+```
+
+What information does the output give us? How might we report this information in a report?
+
+> Does total litter biomass differ among sites at the Niwot Ridge LTER?
+Distribution of dry mass of all functional groups summed for each plot ID. Total litter biomass among sites differed significantly (fig 1; anova; f11,198=4.183, p<0.0001)
+4.183 is F statistic which calculates the pvalue, indicates degrees of freedom and using sample size indicates p value. 
+
+
+
+### Non-parametric equivalent of ANOVA: Kruskal-Wallis Test
+As with the Wilcoxon test, the Kruskal-Wallis test is the non-parametric counterpart to the one-way ANOVA. Here, the data from two or more independent samples are replaced with their ranks without regard to the grouping AND based on the between-group sum of squares calculations. 
+
+For multiple comparisons, a p-value < 0.05 indicates that there is a significant difference between groups, but it does not indicate which groups, or in this case, months, differ from each other.
+
+PVALUE <0.05 INDICATES SIGNIFICANT DIFFERENCE BETWEEN GROUPS
+
+To analyze specific pairs in the data, you must use a *post hoc* test. These include the Dunn's test, a pairwise Mann-Whitney with the Bonferroni correction, or the Conover-Iman test.
+
+```{r}
+Litter.kw <- kruskal.test(Litter.Totals$dryMass ~ Litter.Totals$plotID)
+Litter.kw
+
+#one way to run without the assumption of normal distribution
+# There are two functions to run the Dunn Test
+# dunn.test(Litter.Totals$dryMass, Litter.Totals$plotID, kw = T, 
+#           table = F, list = T, method = "holm", altp = T)   #From package dunn.test
+# dunnTest(Litter.Totals$dryMass, Litter.Totals$plotID)                    #From package FSA
+```
+
+## TWO-WAY ANOVA
+### Main effects
+A two-way ANOVA allows us to examine the effects of two categorical explanatory variables on a continuous response variable. What if we wanted to know how litter masses varied across functional groups and land cover class?
+
+```{r}
+# Format as aov
+Litter.anova.2way <- aov(data = Litter, dryMass ~ functionalGroup + nlcdClass)
+#testing effect of functional group and nlcdclass separately, but running at the same time compared to dry mass
+summary(Litter.anova.2way)
+#both significant predictors of drymass (in general)
+
+# Format as lm
+Litter.anova.2way2 <- lm(data = Litter, dryMass ~ functionalGroup + nlcdClass)
+summary(Litter.anova.2way2)
+#each of functional groups
+#intercept is first alphabetically of functionalgroup and nlcdclass-
+summary(Litter$functionalGroup) # >> FLowers
+summary(Litter$nlcdClass) # >>evergreenforest
+#estimating mean of each group, here is the math needed to estimate that mean
+
+# Run a post-hoc test for pairwise differences
+TukeyHSD(Litter.anova.2way)
+
+```
+
+### Interaction effects
+We may expect the effects of functional group and land cover to be dependent on each other. For instance, we may expect needle biomass to be larger in evergreen forests than in other land types. In this case, we might choose to run an interaction effects two-way ANOVA, which will examine the individual effects of the explanatory variables as well as the interaction of the explanatory variables.
+
+The output gives test statistics for each explanatory variable as well as the interaction effect of the explanatory variables. If the p-value for the interaction effect is less than 0.05, then we would consider the interaction among the explanatory variables to be significant.
+
+```{r}
+# Format as aov
+Litter.anova.2way3 <- aov(data = Litter, dryMass ~ functionalGroup * nlcdClass)
+summary(Litter.anova.2way3)
+#pvalue less than .05 shows significant interaction between two variables
+
+# Format as lm
+Litter.anova.2way4 <- lm(data = Litter, dryMass ~ functionalGroup * nlcdClass)
+summary(Litter.anova.2way4)
+
+```
+
+If the interaction is significant, we interpret pairwise differences for the interaction. If the interaction is not significant, we interpret differences for the main effects only.
+```{r}
+# Run a post-hoc test for pairwise differences
+TukeyHSD(Litter.anova.2way3)
+
+Litter.interaction <- with(Litter, interaction(functionalGroup, nlcdClass))
+#run this by running AOV on ^
+Litter.anova.2way5 <- aov(data = Litter, dryMass ~ Litter.interaction)
+
+Litter.groups <- HSD.test(Litter.anova.2way5, "Litter.interaction", group = TRUE)
+Litter.groups
+#a's have highest biomass, while d's have lower
+
+
+# Plot the results
+# Edit this graph to make it more visually appealing.
+# Add letters to represent statistical groupings.
+Litter.anova.plot <- ggplot(Litter, aes(y = dryMass, x = nlcdClass, color = functionalGroup)) +
+  geom_boxplot()+
+  stat_summary(geom = "text", fun.y = max, vjust = -1, size = 3.5, 
+               position = position_dodge(.75),
+               label = c("d","d","d","a","d","d","d","d","d","d","d","b","d","d","d","d","d","d","cd","bc","d","d","d","d" )) +
+  labs(x = "Land Use Type", y = "Dry Mass (g)", color= "Functional Group") 
+print(Litter.anova.plot)
+
+
+
+```
+
