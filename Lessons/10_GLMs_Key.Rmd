@@ -56,7 +56,7 @@ The GLM is based on the assumption that the data residuals approximate a normal 
 
 ## T-Test
 ### One-sample t-test
-The object of a one sample test is to test the null hypothesis that the mean of the group is equal to a specific value. For example, we might ask ourselves (from the EPA air quality processed dataset): 
+The object of a one sample test is to >>test the null hypothesis that the mean of the group is equal to a specific value<<. For example, we might ask ourselves (from the EPA air quality processed dataset): 
 
 Are Ozone levels below the threshold for "good" AQI index (0-50)?
 
@@ -87,7 +87,8 @@ Write a sentence or two about the results of this test. Include both the results
 > 
 
 ### Two-sample t-test
-The two-sample *t* test is used to test the hypothesis that the mean of two samples is equivalent. Unlike the one-sample tests, a two-sample test requires a second assumption that the variance of the two groups is equivalent. Are Ozone levels different between 2018 and 2019?
+The two-sample *t* test is used to >>>test the hypothesis that the mean of two samples is equivalent. <<<<
+Unlike the one-sample tests, a two-sample test requires a second assumption that the variance of the two groups is equivalent. Are Ozone levels different between 2018 and 2019?
 
 ```{r}
 shapiro.test(EPAair$Ozone[EPAair$Year == 2018])
