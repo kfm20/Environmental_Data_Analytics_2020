@@ -19,9 +19,9 @@ editor_options:
 getwd()
 library(tidyverse)
 library(lubridate)
-install.packages("trend")
+#install.packages("trend")
 library(trend)
-install.packages("zoo")
+#install.packages("zoo")
 library(zoo)
 
 # Set theme
@@ -214,17 +214,17 @@ In general, detecting a monotonic trend requires a long sequence of data with fe
 
 Adjusting the data may be necessary to fulfill the assumptions of a trend test. These adjustments include **aggregation**, **subsampling**, and **interpolation**. What do each of these mean, and why might we want to use them?
 
-> aggregation: 
+> aggregation: taking multiple data points and creating one data point from them, taking months to make yearly data, might be useful if you have a lot of data, way to get around data gaps (if missing a couple of days, get monthly to avoid data gaps)
 
-> subsampling: 
+> subsampling: If you have daily data, you could take the first of every month and compile to show trends over the year
 
-> interpolation: 
+> interpolation: predicting what might be in data gaps and generate equally spaced data
 
 Common interpolation methods: 
 
-* **Piecewise constant**: also known as a "nearest neighbor" approach. Any missing data are assumed to be equal to the measurement made nearest to that date (could be earlier or later).
+* **Piecewise constant**: also known as a >"nearest neighbor"< approach. Any missing data are assumed to be equal to the measurement made nearest to that date (could be earlier or later).
 * **Linear**: could be thought of as a "connect the dots" approach. Any missing data are assumed to fall between the previous and next measurement, with a straight line drawn between the known points determining the values of the interpolated data on any given date.
-* **Spline**: similar to a linear interpolation except that a quadratic function is used to interpolate rather than drawing a straight line.
+* **Spline**: similar to a linear interpolation except that a quadratic function is used to interpolate rather than drawing a straight line. Over predicts upper and under predicts lower bounds
 
 #### Example: interpolation
 
@@ -246,6 +246,9 @@ print(NCPM2.5)
 
 summary(NCAir$Site.Name)
 
+#want as close to 2 years of data as possible with few missing values
+#so we use garinger hs
+
 NCAir.Garinger <- NCAir %>%
   filter(Site.Name == "Garinger High School")
 
@@ -255,10 +258,13 @@ ggplot(NCAir.Garinger, aes(x = Date, y = Ozone)) +
 print(GaringerOzone)
 
 # na.approx function fills in NAs with a linear interpolation
+      #draws line between missing data points to estimate the missing data points     inbetween values
 # Spline interpolation can also be specified as an alternative
 # Piecewise constant interpolation can be done with na.aggregate
 NCAir.Garinger$Ozone <- na.approx(NCAir.Garinger$Ozone)
 NCAir.Garinger$PM2.5 <- na.approx(NCAir.Garinger$PM2.5)
+#takes out NAs from the ozone and pm2.5 columns
+
 
 GaringerOzone.interpolated <-
 ggplot(NCAir.Garinger, aes(x = Date, y = Ozone)) +
@@ -272,8 +278,10 @@ Specific tests for monotonic trend analysis are listed below, with assumptions a
 
 * **linear regression**: no seasonality, fits the assumptions of a parametric test. Function: `lm`
 * **Mann-Kendall**: no seasonality, non-parametric, no temporal autocorrelation, missing data allowed. Function: `mk.test` (package: trend)
+temporal autocorrelation- further away you get in time, harder to correlate values
+Missing data allowed
 * **modified Mann-Kendall**: no seasonality, non-parametric, accounts for temporal autocorrelation, missing data allowed. Function: `mmky` and `mmkh` (package: modifiedmk)
-* **Seasonal Mann-Kendall**: seasonality, non-parametric, no temporal autocorelation, identical distribution. Function: `smk.test` (package: trend)
+* **Seasonal Mann-Kendall**: allows seasonality, non-parametric, no temporal autocorelation, need to be identical distribution. Function: `smk.test` (package: trend)
 
 The packages trend, Kendall, and modifiedmk also include other modifications to monotonic trend tests. Look into the documentation for these packages if you are applying a special case.
 
@@ -292,22 +300,33 @@ EnoDischarge.late.monthly <- EnoDischarge.late %>%
   mutate(Year = year(datetime), 
          Month = month(datetime)) %>%
   group_by(Year, Month) %>%
-  summarise(Discharge = mean(discharge.mean)) 
-  
+  summarise(Discharge = mean(discharge.mean)) #taking mean for each year/month combinations
+#creates new columns for what we grouped by and what we summarized for
+
+
+#want a day, use this code to make a new column named Date, create as a class of date, and pastes info we have from year, month, value of 1 for day, and separate these functions with a dash, and place in that format  
 EnoDischarge.late.monthly$Date <- as.Date(paste(EnoDischarge.late.monthly$Year, 
                                                 EnoDischarge.late.monthly$Month, 
                                                 1, sep="-"), 
                                           format = "%Y-%m-%d")
+#lets us assume its at the first of the month, creating a "date" column when really they are jsut the mean of the month
 
 # Generate time series (smk.test needs ts, not data.frame)
+#making time series for discharge column at a frequency of 12 months, and stating where the time series starts and ends
 EnoDischarge.late.monthly.ts <- ts(EnoDischarge.late.monthly$Discharge, frequency = 12, 
                         start = c(1985, 10, 1), end = c(2019, 12, 1))
-# Run SMK test
+
+# Run SMK test- seasonal mann kindle test
 EnoDischarge.late.trend <- smk.test(EnoDischarge.late.monthly.ts)
+#runs on times series object
 
 # Inspect results
 EnoDischarge.late.trend
 summary(EnoDischarge.late.trend)
+#Results... is there a monotonic trend over time-- pvalue of 0.889 is high, and z score is close to zero, so we cannot identify a significant trend across the years in the dataset
+#is there a trend for each of the seasons we specified-- showing no significant trends over the seasons
+#if some of them were significant, than that month would have a significant trend even if there was no general significant trend
+
 
 EnoDischarge.monthly <-
 ggplot(EnoDischarge.late.monthly, aes(x = Date, y = Discharge)) +
@@ -318,10 +337,12 @@ print(EnoDischarge.monthly)
 
 What would we conclude based on these findings? 
 
->
+>Discharge does not follow a monotonic trend. There is not significant monthly trend of discharge from 1985 to 2019 (seasonal mann-Kendall, pvalue>0.05, z= -0.139). We did not detect any individual trends between months. 
+
+>>REPORT Z and P
  
 If a significant trend was present, we could compute a **Sen's Slope** to quantify that trend (`sens.slope` function in the trend package).
-
+>easy to quantify, hard to graph the trend for a time series
 
 
 ## Forecasting with Autoregressive and Moving Average Models (ARMA)
