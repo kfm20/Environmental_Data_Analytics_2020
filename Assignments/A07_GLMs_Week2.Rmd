@@ -119,7 +119,7 @@ rsquared(Litter.MixedE)
 
 b. continued... How much more variance is explained by adding the random effect to the model? 
 
-> Answer: 2 %  ******
+> Answer: 2 %  -difference between marginal(fixed effect) and conditional(fixed effect and random effect) rsquared
 
 c. Run the same model without the random effect.
 d. Run an anova on the two tests. 
@@ -136,4 +136,4 @@ anova(Litter.MixedE, Litter.FixedE)
 
 d. continued... Is the mixed effects model a better model than the fixed effects model? How do you know?
 
-> Answer: The mixed effects model is a better model based on the anova between the two modesl, mixed effects has a lower AIC.The pvalue tells us whether they have a significantly different fit, and the resultant pvalue from the anova says__****
+> Answer: The mixed effects model is a better model based on the anova between the two modesl, mixed effects has a lower AIC.The pvalue tells us whether they have a significantly different fit, and the resultant pvalue from the anova says there is a significant difference between the models. 
