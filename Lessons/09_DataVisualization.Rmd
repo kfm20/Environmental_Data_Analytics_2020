@@ -36,7 +36,7 @@ PeterPaul.chem.nutrients.gathered$sampledate <- as.Date(
 ### Themes
 Often, we will want to change multiple visual aspects of a plot. Ggplot comes with pre-built themes that will adjust components of plots if you call that theme. 
 ```{r, fig.height = 3, fig.width = 4, warning = FALSE}
-O3plot <- ggplot(EPAair) +
+O3plot <- (EPAair) +
   geom_point(aes(x = Date, y = Ozone)) 
 print(O3plot)
 
