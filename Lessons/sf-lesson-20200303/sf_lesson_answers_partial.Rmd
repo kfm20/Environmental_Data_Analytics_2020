@@ -48,12 +48,9 @@ library("tidyr")
 library("ggplot2")
 library("purrr")
 # some spatial data packages
-install.packages("sf")
 library("sf")
-install.packages("ggmap")
 library("ggmap")
 # some other packages
-install.packages("here")
 library("here")
 ```
 
@@ -85,7 +82,6 @@ here()
 # use here to generate a data path
 # here("directory1", "directory2", "...", "file.extension")
 here("data", "tabular_data", "conterm_basinid.txt")
-###Just generates file path and spits it out in text, doesn;t actually do anything with it
 # for mac: [1] "/User/.../sf-lesson/data/tabular_data/conterm_basinid.txt"
 # for windows: [1] "C:\\...\sf-lesson\data\tabular_data\conterm_basinid.txt"
 
@@ -268,7 +264,6 @@ Start by reading in the basin boundaries for non-reference (i.e., notable human 
 
 ```{r read.in.some.data}
 basins_nf_seplains_raw <- st_read(here("data", "spatial_data", "bas_nonref_SEPlains.shp"))
-#reading in a shape file-- st.read different than read.csv
 # note how I'm using the here package!
 ```
 
@@ -286,7 +281,7 @@ I like to always save a copy of the raw data in my R session and rename all new 
 # add your code here
 gages_raw <- st_read(here("data", "spatial_data", "gagesII_9322_sept30_2011.shp"))
 southeast_state_bounds_raw <- st_read(here("data", "spatial_data", "southeast_state_bounds.shp"))
-my_tabular_data_raw <- read.csv(here("data", "tabular_data", "conterm_climate.txt"))
+my_tabular_data_raw <- read_csv(here("data", "tabular_data", "conterm_climate.txt")) # I'm choosing climate data here
 
 # red warning text is telling you how the data is being parsed
 ```
@@ -310,11 +305,14 @@ Use base R commands to answer the following questions (for basins_nf_seplains_ra
 
 # add your code here
 class(basins_nf_seplains_raw)
-colnames(basins_nf_seplains_raw)
-dim(basins_nf_seplains_raw)
+names(basins_nf_seplains_raw)
+length(names(basins_nf_seplains_raw))
 attributes(basins_nf_seplains_raw)
 head(basins_nf_seplains_raw)
+
 # bonus, add your code here
+glimpse(basins_nf_seplains_raw)
+summary(basins_nf_seplains_raw)
 ```
 
 While not in base, you can also use glimpse() from the tibble (tidyverse) package to look at basin_nf_seplains_raw.
@@ -336,14 +334,13 @@ Use st_crs() to look at the CRSs of the spatial data you have loaded up so far. 
 # add your code here
 st_crs(basins_nf_seplains_raw)
 st_crs(gages_raw)
-st_crs(my_tabular_data_raw)
 st_crs(southeast_state_bounds_raw)
 
 # first two will not have EPSG code but have proj4 string (i.e., "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs")
 
 # last one will have EPSG code 5070 and proj4 string (i.e., "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"), this one looks good!
 
-# we want them all to be the same!<<<<
+# we want them all to be the same!
 ```
 
 ### 2.5 Setting vs Projecting CRSs
@@ -351,10 +348,8 @@ st_crs(southeast_state_bounds_raw)
 Now that you've checked the CRSs of your spatial data, you can either set or project them so they are compatible with one another.
 
 When *setting* a CRS, you're labeling the spatial data with a CRS it already has but is not showing up when you load the data into R. Setting also includes defining a missing ESPG or proj4 string; when one is complete but the other is not.
-It already has a coordinate reference system, I know it has it, but telling R it has it
 
 When *projecting* a CRS, you're converting the spatial data from one CRS to another. For the sf package, transform is used interchangeably with project.
-If coordinate system  exists but changing it into a new coordinate system
 
 It's **very** important know the difference between setting and projecting!
 
@@ -390,39 +385,47 @@ my_proj4 <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=
 my_epsg <- 5070
 
 # setting projections
-st_crs(basins_nf_seplains_raw)<-my_proj4
-st_crs(basins_nf_seplains_raw)<-my_epsg
-
-st_crs(gages_raw)<-my_proj4
-st_crs(gages_raw)<-my_epsg
-
-st_crs(southeast_state_bounds_raw)<-my_proj4
-st_crs(southeast_state_bounds_raw)<- my_epsg
 # set the proj4 string first and then set the EPSG code (because proj4 will over-ride EPSG if you set EPSG first)
 # add your code here
 # basins
-basins_nf_seplains<- basins_nf_seplains_raw
+basins_nf_seplains <- basins_nf_seplains_raw
+st_crs(basins_nf_seplains) <- my_proj4
+basins_nf_seplains <- basins_nf_seplains %>%
+  st_set_crs(my_epsg)
+st_crs(basins_nf_seplains)
+
 # add your code here
 # gages
 gages <- gages_raw
+st_crs(gages) <- my_proj4
+gages <- gages %>%
+  st_set_crs(my_epsg)
+st_crs(gages)
 
 # state bounds
 # this one looks good so you don't need to do anything but here's the code anyway
 # add your code here
 southeast_state_bounds <- southeast_state_bounds_raw
+st_crs(southeast_state_bounds) <- my_proj4
+southeast_state_bounds <- southeast_state_bounds %>%
+  st_set_crs(my_epsg)
+st_crs(southeast_state_bounds)
 
 # projecting to North America Albers Equal Area Conic
 # add your code here
-#na_albers_proj4 <- 
-#na_albers_epsg <- 
-# set the proj4 string fist and then set the EPSG code (because proj4 will over-ride EPSG if you set EPSG first)
+na_albers_proj4 <- "+proj=aea +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
+na_albers_epsg <- 102008
+# set the proj4 string first and then set the EPSG code (because proj4 will over-ride EPSG if you set EPSG first)
+southeast_state_bounds_na_albers <-  sf::st_transform(southeast_state_bounds, crs = na_albers_proj4) %>%
+  st_set_crs(na_albers_epsg)
 
 # check CRSs
 # add your code here
-  
-st_crs(gages)
 st_crs(basins_nf_seplains)
+st_crs(gages)
 st_crs(southeast_state_bounds)
+st_crs(southeast_state_bounds_na_albers)
+# first three should be the same!
 ```
 
 ### 2.6 Converting sp Objects to sf Objects and Vice Versa
@@ -476,7 +479,6 @@ ggplot() +
   theme_bw()
 dev.off()
 # seems to work just fine!
-#Sends a file to ouputs folder
 ```
 
 It looks like you can also manually make a "geometry" column using your standard tidyverse functions and use this to convert from a tabular data format to a sf format. See [this GitHub issue](https://github.com/r-spatial/sf/issues/385) for more information.
@@ -504,7 +506,6 @@ southeast_state_bounds_geometry <- st_geometry(southeast_state_bounds)
 
 # tabular data is dropped
 head(southeast_state_bounds_geometry)
-#dropped tabular data and now just a multi polygon
 
 # notice the class is different now
 class(southeast_state_bounds_geometry)
@@ -520,7 +521,6 @@ southeast_state_bounds_tabular <- st_drop_geometry(southeast_state_bounds)
 
 # geometry data is dropped
 head(southeast_state_bounds_tabular)
-#Tabular data remains
 
 # notice the class is different now
 class(southeast_state_bounds_tabular)
@@ -556,342 +556,36 @@ Bonus: What are some other spatial operations (or confirmations) that you could 
 ```{r activity.gages.select}
 # select a state, here I'm choosing North Carolina (NC)
 # add your code here
-Virginia<- southeast_state_bounds %>% filter(NAME== "Virginia")%>%
-  st_geometry() #keeps spatial data and drops attribute data, only has geometry data now
-names(Virginia)
-class(Virginia)
+nc_state_bounds_geom <- southeast_state_bounds %>%
+  filter(NAME == "North Carolina") %>%
+  st_geometry()
+  # if I wanted Florida instead, what would I need to do?
+
 # check
 # add your code here
-head(Virginia)
+head(nc_state_bounds_geom)
+
 # select watersheds that intersect with NC bounds
 # add your code here
+nc_basins_nf_seplains <- basins_nf_seplains %>%
+  st_intersection(nc_state_bounds_geom)
 
-Virginia_basins_nf_seplains<-basins_nf_seplains%>%
-  st_intersection(Virginia) #intersection same as clip in ARCGIS
 # check
 # add your code here
-head(Virginia_basins_nf_seplains)
+head(nc_basins_nf_seplains)
 
 # select gages that fall within NC bounds
 # add your code here
-virginia_gages<- gages %>%
-  st_intersection(Virginia)
+nc_gages <- gages %>%
+  st_intersection(nc_state_bounds_geom)
+
 # bonus
 # add your code here
-virginia_area<-st_area(Virginia) #area of VA
-virginia_area
-
-va_centroid<-st_centroid(Virginia)#find centroid of VA
-va_centroid
-
-vabuffer<-st_buffer(virginia_gages, dist=100) #buffer around stream gages in VA
-
-not_va_gages<- st_difference(gages, Virginia) #stream gages not in VA
+nc_area <- st_area(nc_state_bounds_geom) # find the area of NC
+nc_centroid <- st_centroid(nc_state_bounds_geom) # find the centroid of the NC
+nc_gages_buffer_100m <- st_buffer(nc_gages, dist = 100) # make a buffer around the stream gages in NC
+not_nc_gages <- st_difference(gages, nc_state_bounds_geom) # find stream gages not in NC
 ```
 
 It's really helpful to actually plot these results before moving forward with your work. That way you an make sure the sf commands are doing what you expect. We'll talk about plotting next...
 
-### 3.2 Visualizing Data
-
-#### 3.2.1 Viz Basics
-
-An import part of spatial data analysis is to *check your work* and also *share your results*. The sf package makes this very easy by adding a geom_sf() to add a vector data layer and geom_sf_text() to add a label layer to any ggplot2 object.
-
-Usually, I (Sheila) use RStudio to visualize all of my plots but since spatial data often has a large file size, it can take a while to load in the built-in RStudio plotting window. Until the folks at RStudio and sf package developers deal with this, I recommend exporting your spatial visualizations to PDF files in a dedicated folder. Here, we'll practice exporting our plots to the "outputs" folder. Make sure you run all lines of code starting from pdf() to dev.off(). The pdf() will write and open a new empty PDF file and dev.off() will close it. It's ok to get a "null device" message here. R is just telling you that it closed the pdf file it created.
-
-```{r basic.sf.plotting}
-# basic plot
-pdf(here("outputs", "southeast_state_bounds.pdf"), width = 11, height = 8.5)
-ggplot() + #put in pdf because faster
-  geom_sf(data = southeast_state_bounds) + #serves as bottom layer
-  #geom_sf(data=, aes()) this would be the next layer on top
-  # you can add color = "blue" to change outline color to blue or lwd = 2 to change the width of the lines
-  theme_bw() # add this to make the background white and not grey
-dev.off()
-
-# adding labels
-pdf(here("outputs", "southeast_state_bounds_with_labs.pdf"), width = 11, height = 8.5)
-ggplot(data = southeast_state_bounds) + # moved this up here so I don't have to keep calling it
-  geom_sf() +
-  geom_sf_text(aes(label = NAME), color = "black") +
-  theme_bw()
-dev.off()
-
-# adding fill by a second variable
-pdf(here("outputs", "southeast_state_bounds_by_area.pdf"), width = 11, height = 8.5)
-ggplot(data = southeast_state_bounds) +
-  geom_sf(aes(fill = Shape_Area)) +
-  geom_sf_text(aes(label = NAME), color = "white") +
-  theme_bw()
-dev.off()
-
-
-#lets look at just VA
-pdf(here("outputs", "Virginia"), width = 11, height = 8.5)
-ggplot() + 
-  geom_sf(data = Virginia) + 
-  theme_bw() 
-dev.off()
-
-```
-
-**Activity**
-
-Let's check your operations from the 3.1.2 activity. You are trying for something like Figure 1a. Are the spatial operation results working as you'd expect? Test out running other operations (i.e., st_crop() and st_contains()) and plotting them to better understand what those do.
-
-```{r activity.checking.operations}
-# plot NC watershed boundardies from 3.1.2
-pdf(here("outputs", "spatial_operations_activity.pdf"), width = 11, height = 8.5)
-# add your code here
-ggplot()+
-  geom_sf(data= Virginia)+
-  geom_sf(data=Virginia_basins_nf_seplains, fill="Pink", alpha=0.25) + 
-  #alpha is transparency, showing the overlapping watrsheds
-  geom_sf(data= virginia_gages, color="black" ) +
-  theme_bw()
-dev.off()
-
-
-#dropping attributes and simply keeping geometry allows the plots to load faster
-```
-
-Notice a few things about Figure 1a: (1) the watersheds are nested (there are smaller ones inside bigger ones), (2) the larger watersheds are cut by the NC state boundaries, and (3) there are some gages that are outside the watershed bounds (i.e., we don't have watershed basins or tabular data for them).
-
-#### 3.2.2 Adding Base-Maps
-
-Basemaps are available to help you give more context to your maps. This is made possible using the ggmap package.
-
-```{r adding.basemaps}
-# select North Carolina (NC)
-nc_state_bounds_geom <- southeast_state_bounds %>%
-  filter(NAME == "North Carolina") %>%
-  st_geometry()
-
-# get data bounding box
-nc_bbox <- nc_state_bounds_geom %>%
-  st_buffer(dist = 150000) %>% # this value is very arbitrary just wanting to make a large buffer around geometry, showing more than just NC, 150,000m
-  st_transform(4326) %>% # WGS84 (for lat and long)
-  #projecting
-  #changing back to lat/long, it was in albersequal area
-  st_bbox() #finds bounding box edges coordinate to create an actual box
-
-nc_bbox # check- gives coordinates of the box
-
-# fix bounding box columns so they match what is needed for the ggmap::get_map() function
-nc_bbox_fix <- c(left = nc_bbox[[1]], bottom = nc_bbox[[2]], right = nc_bbox[[3]], top = nc_bbox[[4]])
-#using outputs from ncbbox to create box
-
-# check result
-nc_bbox_fix
-
-# get basemap
-nc_basemap <- get_map(nc_bbox_fix, maptype = 'terrain-background', source = 'stamen', zoom = 8)
-class(nc_basemap)
-st_crs(nc_basemap)
-# you'll have to trust me that this will have a CRS = WGS84
-
-# convert nc_state_bounds_geom to WGS84 so it matches nc_basemap
-nc_state_bounds_geom_wsg84 <- nc_state_bounds_geom %>%
-  st_transform(4326)
-
-# check
-st_crs(nc_state_bounds_geom_wsg84)
-
-# plot without basemap
-pdf(here("outputs", "nc_without_basemap.pdf"), width = 11, height = 8.5)
-ggplot() +
-  geom_sf(data = nc_state_bounds_geom_wsg84, fill = NA, lwd = 2) +
-  theme_bw()
-dev.off()
-
-# plot with basemap
-# windows version?
-pdf(here("outputs", "nc_with_basemap.pdf"), width = 11, height = 8.5)
-ggmap(nc_basemap) +
-  geom_sf(data = nc_state_bounds_geom_wsg84, fill = NA, lwd = 1, inherit.aes = FALSE)
-dev.off()
-
-# bonus
-# try chaning the zoom on get_map() and see what happens
-# look at the help menu for more information on the zoom range
-```
-
-**Activity**
-
-Can you reproduce Figure 1b?
-
-```{r activity.reproducing.figure1b}
-# select NC
-# add your code here
-
-# make figure 1b
-# find watersheds that overlap with NC (want the whole watershed, not just the part of the watershe that's inside the NC bounds)
-# add your code here
-
-# look at result
-# add your code here
-
-# make a function to convert binary to logic
-# add your code here
-
-# map function on data and select only true values
-# add your code here
-
-# look at result
-# add your code here
-
-# use nc_basins_overlap_logic to select only watersheds that overlap
-# add your code here
-
-# check class
-# add your code here
-
-# select Southeast gages only
-# add your code here
-# stretch break...this might take a while to run
-
-# use nc_basins_overlap_sel to find gages inside
-# add your code here
-# stretch break...this might take a while to run
-
-# convert all to WGS84
-# add your code here
-
-# plot figure 1b
-# add your code here
-pdf(here("outputs", "figure_1b.pdf"), width = 11, height = 8.5)
-# add your code here
-dev.off()
-```
-
-### 3.3 Mixing Spatial and Tabular Data
-
-The sf and tidyverse packages work together very well to wrangle spatial and tabular data. You may have noticed that some of the code above uses the pipe operator (i.e., %>%) to link together analysis steps. Some of the dplyr verbs will also work with sf objects See [here](https://r-spatial.github.io/sf/reference/tidyverse.html) for more info on these verbs.
-
-Let's try an example. Here we'll select all the gages in NC, join them with one of the GAGES-II tabular datasets, and create a map that colors these gage locations by a particular variable in the tabular dataset. We might want to do this as the start of spatial trend analysis.
-
-```{r joining.gage.data}
-# Use the NC state boundary we used earlier to select all the stream gages in NC
-nc_gages <- gages %>%
-  st_intersection(nc_state_bounds_geom)
-
-# take a look at ng_gages
-head(nc_gages)
-names(nc_gages)
-# we see there are some variables we could color by but the tabular data has many more
-
-# take a look at my_tabular_data_raw
-names(my_tabular_data_raw)
-# In this example, we choose the climate data and use the WD_SITE variable. This is the "Site average of annual number of days (days) of measurable precipitation, derived from 30 years of record (1961-1990), 2km PRISM.". This description comes from the gagesII_sept30_2011_var_desc.xlsx file in the tabular data directory.
-
-# check column names of nc_gages to look for joining key
-names(nc_gages)
-# use "STAID"
-
-***mutate(my_tabular_data_raw) ##need to make them both the same type, either factor or numeric 
-
-# join the tabular data to nc_gages (spatial)
-#allowing us to use the attrubutal data to color the different gage points by
-nc_gages_climate <- nc_gages %>%
-  left_join(my_tabular_data_raw, by = "STAID")
-
-# check that it worked
-names(nc_gages_climate)
-# looks good!
-
-# plot WD_SITE for each gage location
-pdf(here("outputs", "nc_gages_by_tabular_data.pdf"), width = 11, height = 8.5)
-ggplot() +
-  geom_sf(data = nc_gages_climate, aes(color = WD_SITE), size = 3) +
-  scale_color_gradient(low = "white", high = "blue") +
-  labs(color = "Gage Avg. Annual # Days with Precipitation") +
-  geom_sf(data = nc_state_bounds_geom, fill = NA) +
-  theme_bw()
-dev.off()
-```
-
-Looks like we have some emerging patterns in average number of days per year with precipitation at the stream gage. We'd have to do some spatial modeling to verify this. It's notable that the Appalachian Mountains are located in the western part of the state, which is where we see the highest number of days per year with precipitation.
-
-**Activity**
-
-Practice joining other types of tabular data onto the spatial datasets provided here. Hint: You can rename the the GAGE_ID column from the basins_nf_seplains dataset to STAID to join the tabular data to each basin.
-
-```{r activity.joining.basin.data}
-# use NC overlapping watersheds from 3.2.2
-# add your code here
-
-# join tabular data
-# add your code here
-
-# check result
-# add your code here
-
-# plot
-pdf(here("outputs", "nc_basins_by_tabular_data.pdf"), width = 11, height = 8.5)
-# add your code here
-dev.off()
-```
-
-# 4. SAVING DATA
-
-To save sf data to .shp files or other spatial file types, use the st_write() command. You'll notice it will also make all the other file extensions required for the .shp file.
-
-```{r saving.data}
-# save nc_state_bounds_geom
-#saving as shape file
-st_write(nc_state_bounds_geom, here("outputs", "nc_boundary.shp"))
-```
-
-Look in your output directory to make sure your shp file is there!
-
-**Activity**
-
-Try saving another spatial dataset you created in Sections 3.1 or 3.3.
-
-```{r activity.saving.more}
-# use st_write(<variable name>, <file path.shp>)
-# add your code here
-```
-
-# 5. EXTRA FEATURES & RESOURCES
-
-### 5.1 Other Interesting Spatial Packages
-
-**ggsn package**
-
-I haven't played around with adding compass roses, scale bars, and all these other important map elements. While not reproducible (I admit!), I will typically export to PDF and then do my edits in Inkscape (think open-source Adobe Illustrator). If you're really wanting to do this in a reproducible way, looks like you can use the [ggsn package](http://oswaldosantos.github.io/ggsn/) in R.
-
-**raster package**
-
-I definitely recommend using the raster package if you have to do any raster spatial data analysis. However, be warned that this package is currently not very friendly with tidyverse packages.
-
-**parallel and doParallel packages**
-
-If you have a big spatial dataset you might need to implement parallel computing. You can use these packages to do that.
-
-**tmap package**
-
-This package is nice package for making maps. I didn't have enough time to cover it but I recommend checking it out. More information [here](https://github.com/mtennekes/tmap).
-
-**leaflet and mapview packages**
-
-You can use these packages to make your maps interactive. See more information about leaflet [here](https://rstudio.github.io/leaflet/) and about mapview [here](https://r-spatial.github.io/mapview/). Notably, the leaflet package only works with vector spatial data while mapview can be used for displaying both vector and raster data.
-
-### 5.2 Referece Materials
-
-Some good places to start looking for help with the sf package include the [rspatial website](https://cengel.github.io/R-spatial/) and the [sf package vignettes](https://r-spatial.github.io/sf/articles/sf1.html). We've listed out some other reference materials too.
-
-#### 5.2.1 Books & Blogs
-
-* [Geocomputation with R by Lovelace et al. - Open Online Book](https://bookdown.org/robinlovelace/geocompr/)
-* [Applied Spatial Data Analysis with R by Bivand et al. - Book](https://www.springer.com/gp/book/9781461476177)
-* [Ecological Models and Data in R by Bolker - Book](https://www.amazon.com/Ecological-Models-Data-Benjamin-Bolker/dp/0691125228)
-* [Spatial Data Analysis in Ecology and Agriculture Using R by Plant - Book](https://www.crcpress.com/Spatial-Data-Analysis-in-Ecology-and-Agriculture-Using-R-Second-Edition/Plant/p/book/9780815392750)
-* [sf geometrical operations - Blog post](http://rpubs.com/sogletr/sf-ops)
-* [R-Spatial Blog on ggplot2 and sf](https://www.r-spatial.org/r/2018/10/25/ggplot2-sf.html)
-* [R-Spatial-Ladies GitHub Reference List](https://github.com/rspatialladies/rspatial-resources)
-* So many more...
-
-#### 5.2.2 Cheatsheet(s)
-
-We've included a copy of the sf package cheatsheet in the project folder. I'd recommend printing it off and keeping it close-by for easy reference. You can find a number of cheatsheets for other tidyverse packages [here](https://rstudio.com/resources/cheatsheets/).
