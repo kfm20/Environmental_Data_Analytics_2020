@@ -601,7 +601,7 @@ Usually, I (Sheila) use RStudio to visualize all of my plots but since spatial d
 
 ```{r basic.sf.plotting}
 # basic plot
-pdf(here("outputs", "southeast_state_bounds.pdf"), width = 11, height = 8.5)
+pdf(here("outputs", "southeast_state_bounds_today.pdf"), width = 11, height = 8.5)
 ggplot() + #put in pdf because faster
   geom_sf(data = southeast_state_bounds) + #serves as bottom layer
   #geom_sf(data=, aes()) this would be the next layer on top
@@ -610,7 +610,7 @@ ggplot() + #put in pdf because faster
 dev.off()
 
 # adding labels
-pdf(here("outputs", "southeast_state_bounds_with_labs.pdf"), width = 11, height = 8.5)
+pdf(here("outputs", "southeast_state_bounds_with_labs_today.pdf"), width = 11, height = 8.5)
 ggplot(data = southeast_state_bounds) + # moved this up here so I don't have to keep calling it
   geom_sf() +
   geom_sf_text(aes(label = NAME), color = "black") +
@@ -618,7 +618,7 @@ ggplot(data = southeast_state_bounds) + # moved this up here so I don't have to 
 dev.off()
 
 # adding fill by a second variable
-pdf(here("outputs", "southeast_state_bounds_by_area.pdf"), width = 11, height = 8.5)
+pdf(here("outputs", "southeast_state_bounds_by_area_today.pdf"), width = 11, height = 8.5)
 ggplot(data = southeast_state_bounds) +
   geom_sf(aes(fill = Shape_Area)) +
   geom_sf_text(aes(label = NAME), color = "white") +
@@ -641,7 +641,7 @@ Let's check your operations from the 3.1.2 activity. You are trying for somethin
 
 ```{r activity.checking.operations}
 # plot NC watershed boundardies from 3.1.2
-pdf(here("outputs", "spatial_operations_activity.pdf"), width = 11, height = 8.5)
+pdf(here("outputs", "spatial_operations_activity_today.pdf"), width = 11, height = 8.5)
 # add your code here
 ggplot()+
   geom_sf(data= Virginia)+

@@ -39,3 +39,173 @@ Here are your three options:
 * Tabular data that correpond to one of the layers, specified as an aesthetic (e.g., total litter biomass at each trap, land cover class at each trap)
 
 Hint: One package that may come in handy here is the `maps` package, which contains several options for basemaps that cover political and geologic boundaries.
+
+
+#Loading Packages
+```{r load.libraries, error=FALSE, message=FALSE, warning=FALSE}
+
+library("readr")
+library("dplyr")
+library("tidyr")
+library("ggplot2")
+library("purrr")
+# some spatial data packages
+#install.packages("sf")
+library("sf")
+#install.packages("ggmap")
+library("ggmap")
+# some other packages
+#install.packages("here")
+library("here")
+```
+
+#Read in Data
+```{r read.in.some.data}
+basins_nf_seplains_raw <- st_read(here("data", "spatial_data", "bas_nonref_SEPlains.shp"))
+
+gages_raw <- st_read(here("data", "spatial_data", "gagesII_9322_sept30_2011.shp"))
+
+southeast_state_bounds_raw <- st_read(here("data", "spatial_data", "southeast_state_bounds.shp"))
+
+my_tabular_data_raw <- read.csv(here("data", "tabular_data", "conterm_climate.txt"))
+```
+
+
+#Setting up Projections
+```{r activity.setting.projecting}
+# define proj4 string and EPSG code
+my_proj4 <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
+my_epsg <- 5070
+
+# setting projections
+st_crs(basins_nf_seplains_raw)<-my_proj4
+st_crs(basins_nf_seplains_raw)<-my_epsg
+
+st_crs(gages_raw)<-my_proj4
+st_crs(gages_raw)<-my_epsg
+
+st_crs(southeast_state_bounds_raw)<-my_proj4
+st_crs(southeast_state_bounds_raw)<- my_epsg
+
+#Rename
+basins_nf_seplains<- basins_nf_seplains_raw
+
+gages <- gages_raw
+
+southeast_state_bounds <- southeast_state_bounds_raw
+
+# check CRSs
+st_crs(gages)
+st_crs(basins_nf_seplains)
+st_crs(southeast_state_bounds)
+```
+
+
+#Convert to SF Object
+```{r tabular.to.sf }
+# read in tabular format
+gages_tabular <- read_csv(here("data", "tabular_data", "gagesII_sept30_2011_tabular.csv")) %>%
+  as.data.frame() # use this to drop the tibble classes (i.e., tbl_df and tbl)
+
+class(gages_tabular)
+
+# use names() to get spatial data columns
+names(gages_tabular)
+# LAT_GAGE is y value and LNG_GAGE is x value
+
+# convert to sf object
+gages_tabular_as_sf <- st_as_sf(gages_tabular, coords = c("LNG_GAGE", "LAT_GAGE"), crs = 4326, dim = "XY") # lat long so set CRS = WGS84
+
+# check class and CRS
+class(gages_tabular_as_sf)
+head(gages_tabular_as_sf)
+st_crs(gages_tabular_as_sf)
+# we'll need to change that if we want to use it with state bounds and watershed boundaries
+
+# check by plotting (more on plotting below)
+pdf(here("outputs", "tabular_to_sf_check_today.pdf"), width = 11, height = 8.5)
+ggplot() +
+  geom_sf(data = gages_tabular_as_sf) +
+  theme_bw()
+dev.off()
+
+```
+
+#Dropping tabular data
+```{r isolating.geometry}
+southeast_state_bounds_geometry <- st_geometry(southeast_state_bounds)
+
+head(southeast_state_bounds_geometry)
+#dropped tabular data and now just a multi polygon
+
+# notice the class is different now
+class(southeast_state_bounds_geometry)
+# it's an sfc class, specifically an sfc_MULTIPOLYGON class
+```
+
+#Drop geo??
+```{r dropping.geometry}
+# geometry data is attached
+head(southeast_state_bounds)
+southeast_state_bounds_tabular <- st_drop_geometry(southeast_state_bounds)
+
+# geometry data is dropped
+head(southeast_state_bounds_tabular)
+
+# notice the class is different now
+class(southeast_state_bounds_tabular)
+# it's a data.frame class, we could convert to a tibble using as_tibble()
+```
+
+#Filtering through data we need
+```{r activity.gages.select}
+# select a state, here I'm choosing North Carolina (NC)
+# add your code here
+NC<- southeast_state_bounds %>% filter(NAME== "NC")%>%
+  st_geometry() #keeps spatial data and drops attribute data, only has geometry data now
+names(NC)
+class(NC)
+# check
+# add your code here
+head(NC)
+# select watersheds that intersect with NC bounds
+# add your code here
+
+NC_basins_nf_seplains<-basins_nf_seplains%>%
+  st_intersection(NC) #intersection same as clip in ARCGIS
+# check
+# add your code here
+head(NC_basins_nf_seplains)
+
+# select gages that fall within NC bounds
+# add your code here
+NC_gages<- gages %>%
+  st_intersection(NC)
+# bonus
+# add your code here
+NC_area<-st_area(NC) #area of VA
+NC_area
+
+NC_centroid<-st_centroid(NC)#find centroid of VA
+NC_centroid
+
+ncbuffer<-st_buffer(NC_gages, dist=100) #buffer around stream gages in VA
+
+not_nc_gages<- st_difference(gages, NC) #stream gages not in VA
+```
+
+
+
+#Visualizing the data
+```{r basic.sf.plotting}
+
+
+pdf(here("outputs", "NC_test_fig.pdf"), width = 11, height = 8.5)
+ggplot() +
+  geom_sf(data = NC, fill = NA) +
+  geom_sf(data = NC_basins_nf_seplains, alpha = 0.25) +
+  geom_sf(data = NC_gages, lwd = 1) +
+  theme_bw()
+dev.off()
+
+```
