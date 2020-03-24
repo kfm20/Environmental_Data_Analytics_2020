@@ -41,6 +41,8 @@ version$version.string
 Go ahead and load up the primary packages for today's lesson.  You'll need the tidyverse packages readr, dplyr, tidyr, and ggplot2. For working with spatial data, make sure you have sf and ggmap. Code to check and force install these packages is not included here, so you'll need to do this yourself before this code will run or knit.
 
 ```{r load.libraries, error=FALSE, message=FALSE, warning=FALSE}
+
+getwd()
 # some tidyverse packages
 library("readr")
 library("dplyr")
@@ -263,6 +265,7 @@ Here is what the spatial data for this lesson looks like (Figure 4). Southeast s
 Start by reading in the basin boundaries for non-reference (i.e., notable human impact) for the Southeast Plains using `st_read()` from the sf package. Notice how you only call the .shp file here. You don't need to include all the other files that come along with the .shp file (i.e., .prj, .sbn, .shx, .sbx, .dbf, etc.).
 
 ```{r read.in.some.data}
+getwd()
 basins_nf_seplains_raw <- st_read(here("data", "spatial_data", "bas_nonref_SEPlains.shp"))
 # note how I'm using the here package!
 ```

@@ -43,7 +43,7 @@ Hint: One package that may come in handy here is the `maps` package, which conta
 
 #Loading Packages
 ```{r load.libraries, error=FALSE, message=FALSE, warning=FALSE}
-
+ getwd()
 library("readr")
 library("dplyr")
 library("tidyr")
@@ -61,13 +61,17 @@ library("here")
 
 #Read in Data
 ```{r read.in.some.data}
+getwd()
 basins_nf_seplains_raw <- st_read(here("data", "spatial_data", "bas_nonref_SEPlains.shp"))
 
 gages_raw <- st_read(here("data", "spatial_data", "gagesII_9322_sept30_2011.shp"))
 
 southeast_state_bounds_raw <- st_read(here("data", "spatial_data", "southeast_state_bounds.shp"))
 
-my_tabular_data_raw <- read.csv(here("data", "tabular_data", "conterm_climate.txt"))
+Hydrotabular_data_raw <- read.csv(here("data", "tabular_data", "conterm_hydro.txt"))
+Climatetabular_data_raw <- read.csv(here("data", "tabular_data", "conterm_climate.txt"))
+Geotabular_data_raw <- read.csv(here("data", "tabular_data", "conterm_geology.txt"))
+Topotabular_data_raw <- read.csv(here("data", "tabular_data", "conterm_topo.txt"))
 ```
 
 
@@ -88,16 +92,16 @@ st_crs(southeast_state_bounds_raw)<-my_proj4
 st_crs(southeast_state_bounds_raw)<- my_epsg
 
 #Rename
-basins_nf_seplains<- basins_nf_seplains_raw
+basins<- basins_nf_seplains_raw
 
 gages <- gages_raw
 
-southeast_state_bounds <- southeast_state_bounds_raw
+state_bounds <- southeast_state_bounds_raw
 
 # check CRSs
 st_crs(gages)
-st_crs(basins_nf_seplains)
-st_crs(southeast_state_bounds)
+st_crs(basins)
+st_crs(state_bounds)
 ```
 
 
@@ -161,37 +165,32 @@ class(southeast_state_bounds_tabular)
 ```{r activity.gages.select}
 # select a state, here I'm choosing North Carolina (NC)
 # add your code here
-NC<- southeast_state_bounds %>% filter(NAME== "NC")%>%
+Georgia<- southeast_state_bounds %>% filter(NAME== "Georgia")%>%
   st_geometry() #keeps spatial data and drops attribute data, only has geometry data now
-names(NC)
-class(NC)
+names(Georgia)
+class(Georgia)
 # check
 # add your code here
-head(NC)
+head(Georgia)
 # select watersheds that intersect with NC bounds
 # add your code here
 
-NC_basins_nf_seplains<-basins_nf_seplains%>%
-  st_intersection(NC) #intersection same as clip in ARCGIS
+GA_basins_nf_seplains<-basins_nf_seplains%>%
+  st_intersection(Georgia) #intersection same as clip in ARCGIS
 # check
 # add your code here
-head(NC_basins_nf_seplains)
+head(GA_basins_nf_seplains)
 
 # select gages that fall within NC bounds
 # add your code here
-NC_gages<- gages %>%
-  st_intersection(NC)
-# bonus
-# add your code here
-NC_area<-st_area(NC) #area of VA
-NC_area
+GA_gages<- gages %>%
+  st_intersection(Georgia)
 
-NC_centroid<-st_centroid(NC)#find centroid of VA
-NC_centroid
 
-ncbuffer<-st_buffer(NC_gages, dist=100) #buffer around stream gages in VA
 
-not_nc_gages<- st_difference(gages, NC) #stream gages not in VA
+GAbuffer<-st_buffer(GA_gages, dist=100) #buffer around stream gages in VA
+
+not_GA_gages<- st_difference(gages, GA) #stream gages not in VA
 ```
 
 
@@ -200,12 +199,58 @@ not_nc_gages<- st_difference(gages, NC) #stream gages not in VA
 ```{r basic.sf.plotting}
 
 
-pdf(here("outputs", "NC_test_fig.pdf"), width = 11, height = 8.5)
+pdf(here("outputs", "GA_test_fig.pdf"), width = 11, height = 8.5)
 ggplot() +
-  geom_sf(data = NC, fill = NA) +
-  geom_sf(data = NC_basins_nf_seplains, alpha = 0.25) +
-  geom_sf(data = NC_gages, lwd = 1) +
+  geom_sf(data = Georgia, fill = NA) +
+  geom_sf(data = GA_basins_nf_seplains, fill= "Pink", alpha = 0.25) +
+  geom_sf(data = GA_gages, lwd = 1) +
   theme_bw()
 dev.off()
+
+```
+
+
+#Adding in Tabular Data
+```{r tabular data input}
+
+names(Hydrotabular_data_raw)
+
+
+#joining hydro tabular and ga gages data via STAID
+GA_gages_Topo <- GA_gages %>%
+  left_join(Topotabular_data_raw, by = "STAID")
+#One STAID is a factor and one is numeric, let's see which one is which
+class(GA_gages$STAID) #factor
+class(Topotabular_data_raw$STAID) #numeric
+#Lets change Hydrotabular_data_raw STAID to a factor
+Topotabular_data_raw$STAID<- as.factor(Topotabular_data_raw$STAID)
+class(Topotabular_data_raw$STAID)
+#It worked!!
+
+#Now try to rejoin
+GA_gages_Topo <- GA_gages %>%
+  left_join(Topotabular_data_raw, by = "STAID")
+#warning message: Column `STAID` joining factors with different levels, coercing to character vector 
+#Let's see if it worked
+
+#PROBLEM??
+#***Ga_gages_Topo is putting NA's in all columns that were the topo data set
+
+
+
+
+```
+
+#Now we plot
+```{r plotting with tabular and spatial}
+pdf(here("outputs", "GA_gages_by_tabular_data.pdf"), width = 11, height = 8.5)
+ggplot() +
+  geom_sf(data = GA_gages_Topo, aes(color = SLOPE_PCT), size = 3) +
+  scale_color_gradient(low = "white", high = "blue") +
+  labs(color = "Percent of Stream kilometers Identified as Artificial") +
+  geom_sf(data = Georgia, fill = NA) +
+  theme_bw()
+dev.off()
+
 
 ```

@@ -569,6 +569,7 @@ head(Virginia)
 Virginia_basins_nf_seplains<-basins_nf_seplains%>%
   st_intersection(Virginia) #intersection same as clip in ARCGIS
 # check
+
 # add your code here
 head(Virginia_basins_nf_seplains)
 

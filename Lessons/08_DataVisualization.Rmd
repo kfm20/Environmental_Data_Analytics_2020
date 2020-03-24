@@ -5,8 +5,8 @@ date: "Spring 2020"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
-  chunk_output_type: console
   #can specify where want outputs to be displayed
+  chunk_output_type: console
 ---
 Notes: Barplots are really only great for count data*
 
