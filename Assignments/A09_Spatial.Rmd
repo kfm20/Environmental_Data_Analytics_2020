@@ -163,28 +163,29 @@ class(southeast_state_bounds_tabular)
 
 #Filtering through data we need
 ```{r activity.gages.select}
-# select a state, here I'm choosing North Carolina (NC)
+# select a state, here I'm choosing __
 # add your code here
-Georgia<- southeast_state_bounds %>% filter(NAME== "Georgia")%>%
+NorthCarolina<- southeast_state_bounds %>% filter(NAME== "North Carolina")%>%
   st_geometry() #keeps spatial data and drops attribute data, only has geometry data now
-names(Georgia)
-class(Georgia)
+
+names(NorthCarolina)
+class(NorthCarolina)
 # check
 # add your code here
-head(Georgia)
+head(NorthCarolina)
 # select watersheds that intersect with NC bounds
 # add your code here
 
-GA_basins_nf_seplains<-basins_nf_seplains%>%
-  st_intersection(Georgia) #intersection same as clip in ARCGIS
+NC_basins_nf_seplains<-basins_nf_seplains%>%
+  st_intersection(NorthCarolina) #intersection same as clip in ARCGIS
 # check
 # add your code here
-head(GA_basins_nf_seplains)
+head(NC_basins_nf_seplains)
 
 # select gages that fall within NC bounds
 # add your code here
-GA_gages<- gages %>%
-  st_intersection(Georgia)
+NC_gages<- gages %>%
+  st_intersection(NorthCarolina)
 
 
 
@@ -199,11 +200,11 @@ not_GA_gages<- st_difference(gages, GA) #stream gages not in VA
 ```{r basic.sf.plotting}
 
 
-pdf(here("outputs", "GA_test_fig.pdf"), width = 11, height = 8.5)
+pdf(here("outputs", "NC_test_fig.pdf"), width = 11, height = 8.5)
 ggplot() +
-  geom_sf(data = Georgia, fill = NA) +
-  geom_sf(data = GA_basins_nf_seplains, fill= "Pink", alpha = 0.25) +
-  geom_sf(data = GA_gages, lwd = 1) +
+  geom_sf(data = NorthCarolina, fill = NA) +
+  geom_sf(data = NC_basins_nf_seplains, fill= "Pink", alpha = 0.25) +
+  geom_sf(data = NC_gages, lwd = 1) +
   theme_bw()
 dev.off()
 
@@ -213,23 +214,24 @@ dev.off()
 #Adding in Tabular Data
 ```{r tabular data input}
 
-names(Hydrotabular_data_raw)
+names(Climatetabular_data_raw)
 
 
 #joining hydro tabular and ga gages data via STAID
-GA_gages_Topo <- GA_gages %>%
-  left_join(Topotabular_data_raw, by = "STAID")
+NC_gages_Climate <- NC_gages %>%
+  left_join(Climatetabular_data_raw, by = "STAID")
 #One STAID is a factor and one is numeric, let's see which one is which
-class(GA_gages$STAID) #factor
-class(Topotabular_data_raw$STAID) #numeric
+class(NC_gages$STAID) #factor
+class(Climatetabular_data_raw$STAID) #numeric
 #Lets change Hydrotabular_data_raw STAID to a factor
-Topotabular_data_raw$STAID<- as.factor(Topotabular_data_raw$STAID)
-class(Topotabular_data_raw$STAID)
+Climatetabular_data_raw$STAID<- as.factor(Climatetabular_data_raw$STAID)
+class(Climatetabular_data_raw$STAID)
+Climatetabular_data_raw
 #It worked!!
 
 #Now try to rejoin
-GA_gages_Topo <- GA_gages %>%
-  left_join(Topotabular_data_raw, by = "STAID")
+NC_gages_Climate <- NC_gages %>%
+  left_join(Climatetabular_data_raw, by = "STAID")
 #warning message: Column `STAID` joining factors with different levels, coercing to character vector 
 #Let's see if it worked
 
